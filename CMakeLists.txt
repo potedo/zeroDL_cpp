@@ -15,7 +15,6 @@ include_directories(datasets/include)
 
 add_subdirectory(src)
 add_subdirectory(datasets/src)
-add_subdirectory(sample_cmake)
 add_subdirectory(test)
 
 link_directories(include)
