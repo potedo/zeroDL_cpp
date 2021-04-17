@@ -2,7 +2,7 @@
 #include <vector>
 #include <unordered_map>
 #include <Eigen/Dense>
-#include "../matplotlibcpp.h"
+#include <matplotlibcpp.h>
 #include "../include/numerical_gradient.h"
 #include "../include/optimizer.h"
 
