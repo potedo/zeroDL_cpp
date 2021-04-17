@@ -1,7 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <Eigen/Dense>
-#include "../include/simple_activation.h"
+#include "../ch5/include/simple_activation.h"
 
 using namespace Eigen;
 

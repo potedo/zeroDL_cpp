@@ -3,9 +3,9 @@
 #include <vector>
 #include <iostream>
 #include <Eigen/Dense>
-#include "../include/two_layer_net.h"
+#include "../ch5/include/two_layer_net.h"
 #include "../datasets/include/mnist.h"
-#include "../matplotlibcpp.h"
+#include <matplotlibcpp.h>
 
 using namespace Eigen;
 namespace plt = matplotlibcpp;

@@ -1,5 +1,5 @@
 #include <Eigen/Dense>
-#include "../matplotlibcpp.h"
+#include <matplotlibcpp.h>
 #include <vector>
 
 namespace plt = matplotlibcpp;

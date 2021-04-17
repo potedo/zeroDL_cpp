@@ -1,7 +1,7 @@
 #include <iostream>
 #include <vector>
-#include "../matplotlibcpp.h" // 同じフォルダに配置
-#include "../include/simple_activation.h"
+#include <matplotlibcpp.h>
+#include "../ch5/include/simple_activation.h"
 using namespace std;
 
 namespace plt = matplotlibcpp;

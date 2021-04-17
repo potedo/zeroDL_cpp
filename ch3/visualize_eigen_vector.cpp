@@ -1,4 +1,4 @@
-#include "../matplotlibcpp.h"
+#include <matplotlibcpp.h>
 #include <Eigen/Dense>
 #include <iostream>
 #include <vector>

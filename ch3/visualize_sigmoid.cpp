@@ -1,5 +1,5 @@
-#include "../matplotlibcpp.h"
-#include "../include/simple_activation.h"
+#include <matplotlibcpp.h>
+#include "../ch5/include/simple_activation.h"
 #include <Eigen/Dense>
 #include <vector>
 

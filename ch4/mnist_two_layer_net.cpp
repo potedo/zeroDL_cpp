@@ -2,7 +2,7 @@
 #include <string>
 #include <iostream>
 #include <Eigen/Dense>
-#include "../include/two_layer_net.h"
+#include "../ch5/include/two_layer_net.h"
 #include "../datasets/include/mnist.h"
 
 using namespace Eigen;

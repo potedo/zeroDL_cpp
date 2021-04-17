@@ -2,7 +2,7 @@
 #include <string>
 #include <map>
 #include <Eigen/Dense>
-#include "../include/two_layer_net.h"
+#include "../ch5/include/two_layer_net.h"
 
 using namespace Eigen;
 using namespace MyDL;
