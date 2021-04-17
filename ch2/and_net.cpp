@@ -1,5 +1,5 @@
 #include <iostream>
-#include "../include/simple_perceptron.h"
+#include "../ch5/include/simple_perceptron.h"
 
 int main(){
     using std::cout;

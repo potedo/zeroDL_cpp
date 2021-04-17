@@ -18,18 +18,12 @@ include_directories(ch5/include)
 add_subdirectory(src)
 add_subdirectory(datasets/src)
 add_subdirectory(test)
+add_subdirectory(ch2)
 add_subdirectory(ch3)
 add_subdirectory(ch4)
 add_subdirectory(ch5)
-add_subdirectory(ch5/src)
+add_subdirectory(ch5/src) #このライブラリも simple_dnn_libのようなフォルダを用意し、そこから読み出すようにした方が自然
 add_subdirectory(ch6)
-
-# link_directories(include)
-# link_directories(datasets/include)
-# link_directories(ch5/include)
-
-# target_link_libraries(zeroDL include)
-# target_link_libraries(zeroDL datasets/include)
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})

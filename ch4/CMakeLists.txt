@@ -26,7 +26,7 @@ target_link_libraries(gradient
 )
 
 target_link_libraries(mnist_two_layer_net
-    ch5_library
+    simple_dnn_lib
     mnist
 )
 
@@ -35,15 +35,15 @@ target_link_libraries(partial_diff
 )
 
 target_link_libraries(simpleNet
-    ch5_library
+    simple_dnn_lib
 )
 
 target_link_libraries(test_two_layer_net
-    ch5_library
+    simple_dnn_lib
 )
 
 target_link_libraries(train_mnist_two_layer_net
     ${PYTHON_LIBRARIES}
-    ch5_library
+    simple_dnn_lib
     mnist
 )

@@ -22,7 +22,7 @@ target_include_directories(visualize_step_function_sample PUBLIC ${PYTHON_INCLUD
 target_include_directories(visualize_step_function PUBLIC ${PYTHON_INCLUDE_DIRS})
 
 target_link_libraries(MLP_3layers
-    ch5_library
+    simple_dnn_lib
 )
 
 target_link_libraries(sample_imshow
@@ -30,7 +30,7 @@ target_link_libraries(sample_imshow
 )
 
 target_link_libraries(test_softmax_eigen
-    ch5_library
+    simple_dnn_lib
 )
 
 target_link_libraries(vis_eigen_vector_revised
@@ -43,20 +43,20 @@ target_link_libraries(visualize_eigen_vector
 
 target_link_libraries(visualize_relu
     ${PYTHON_LIBRARIES}
-    ch5_library
+    simple_dnn_lib
 )
 
 target_link_libraries(visualize_sigmoid
     ${PYTHON_LIBRARIES}
-    ch5_library
+    simple_dnn_lib
 )
 
 target_link_libraries(visualize_step_function_sample
     ${PYTHON_LIBRARIES}
-    ch5_library
+    simple_dnn_lib
 )
 
 target_link_libraries(visualize_step_function
     ${PYTHON_LIBRARIES}
-    ch5_library
+    simple_dnn_lib
 )

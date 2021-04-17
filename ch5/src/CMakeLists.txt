@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.0.0)
 
-add_library(ch5_library STATIC
+add_library(simple_dnn_lib STATIC
     simple_layer.cpp
     simple_activation.cpp
     simple_loss.cpp
@@ -9,6 +9,6 @@ add_library(ch5_library STATIC
     numerical_gradient.cpp
 )
 
-target_include_directories(ch5_library
+target_include_directories(simple_dnn_lib
     PUBLIC /mnt/c/Users/lank4/Desktop/zeroDL_cpp/ch5/include
 )
