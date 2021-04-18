@@ -3,7 +3,7 @@
 #include <vector>
 #include <iostream>
 #include <Eigen/Dense>
-#include "../ch5/include/two_layer_net.h"
+#include "../simple_lib/include/two_layer_net.h"
 #include "../datasets/include/mnist.h"
 #include <matplotlibcpp.h>
 

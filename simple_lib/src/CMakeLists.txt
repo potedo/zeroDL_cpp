@@ -10,5 +10,5 @@ add_library(simple_dnn_lib STATIC
 )
 
 target_include_directories(simple_dnn_lib
-    PUBLIC /mnt/c/Users/lank4/Desktop/zeroDL_cpp/ch5/include
+    PUBLIC ../include
 )

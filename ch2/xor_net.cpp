@@ -1,5 +1,5 @@
 #include <iostream>
-#include "../ch5/include/simple_perceptron.h"
+#include "../simple_lib/include/simple_perceptron.h"
 
 int main()
 {

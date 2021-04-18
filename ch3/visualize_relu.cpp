@@ -1,6 +1,6 @@
 #include <vector>
 #include <Eigen/Dense>
-#include "../ch5/include/simple_activation.h"
+#include "../simple_lib/include/simple_activation.h"
 #include <matplotlibcpp.h>
 
 namespace plt = matplotlibcpp;

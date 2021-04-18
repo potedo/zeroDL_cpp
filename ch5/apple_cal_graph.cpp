@@ -1,6 +1,6 @@
 #include <iostream>
 #include <Eigen/Dense>
-#include "./include/simple_layer.h"
+#include "../simple_lib/include/simple_layer.h"
 
 using namespace Eigen;
 using namespace MyDL;

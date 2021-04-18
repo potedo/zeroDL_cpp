@@ -9,5 +9,5 @@ add_library(zeroDLcpp STATIC
 )
 
 target_include_directories(zeroDLcpp
-    PUBLIC /mnt/c/Users/lank4/Desktop/zeroDL_cpp/include
+    PUBLIC ../include
 )
