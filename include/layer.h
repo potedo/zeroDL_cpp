@@ -141,6 +141,20 @@ namespace MyDL{
             vector<MatrixXd> backward(vector<MatrixXd>);
     };
 
+
+    class Dropout: public BaseLayer
+    {
+        private:
+            double _dropout_ratio;
+            Matrix<bool, Dynamic, Dynamic> _mask; // 実行時にサイズ決定できないか？(double Dynamic Dynamicが実体なので)
+        public:
+            Dropout(){};
+            Dropout(const int, const int, const double dropout_ratio=0.5); // 実行時にサイズ決定できる場合には、最初の2つの引数(int)が不要
+            vector<MatrixXd> forward(vector<MatrixXd>);
+            vector<MatrixXd> backward(vector<MatrixXd>);
+
+    };
+
 }
 
 

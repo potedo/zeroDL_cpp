@@ -348,4 +348,58 @@ namespace MyDL
         return grads;
     }
 
+    // -------------------------------------------------
+    //          Dropout
+    // -------------------------------------------------
+    Dropout::Dropout(const int row, const int col, const double dropout_ratio)
+    {
+        _dropout_ratio = dropout_ratio;
+        _mask = MatrixXd::Zero(row, col).cast<bool>();
+    }
+
+    vector<MatrixXd> Dropout::forward(vector<MatrixXd> inputs)
+    {
+        MatrixXd X = inputs[0];
+        MatrixXd out;
+        vector<MatrixXd> outs;
+        bool train_flg = Config::getInstance().get_flag();
+        int col, row;
+        col = _mask.cols(); // サイズの取得
+        row = _mask.rows(); // サイズの取得
+
+        // Eigen MatrixXd::Random は -1 ~ 1 の範囲で乱数生成するので、これを0~1の範囲に変更する
+        double HI = 1.0;
+        double LO = 0;
+        double range = HI - LO;
+
+        if (train_flg)
+        {
+            // 乱数の範囲調整 → 自作関数にし、utilとして使用？
+            MatrixXd rand = MatrixXd::Random(row, col);
+            rand = (rand + MatrixXd::Constant(row, col, 1.)*range/2.);
+            rand = (rand + MatrixXd::Constant(row, col, LO));
+            _mask = rand.array() < _dropout_ratio;
+            MatrixXd mask = _mask.cast<double>();
+            out = X.array() * mask.array();
+        } else {
+            out = X * (1.0 - _dropout_ratio);
+        }
+
+        outs.push_back(out);
+        return outs;
+    }
+
+    vector<MatrixXd> Dropout::backward(vector<MatrixXd> douts)
+    {
+        vector<MatrixXd> grads;
+        MatrixXd dout = douts[0];
+        MatrixXd grad;
+
+        grad = dout.array() * _mask.cast<double>().array();
+
+        grads.push_back(grad);
+        return grads;
+    }
+
+
 }

@@ -4,6 +4,7 @@ add_library(zeroDLcpp STATIC
     layer.cpp
     optimizer.cpp
     sample_network.cpp
+    model.cpp
     loss.cpp
     numerical_gradient.cpp
 )
