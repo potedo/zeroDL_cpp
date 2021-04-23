@@ -6,6 +6,7 @@ add_library(zeroDLcpp STATIC
     sample_network.cpp
     model.cpp
     loss.cpp
+    trainer.cpp
     numerical_gradient.cpp
 )
 

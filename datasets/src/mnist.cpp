@@ -96,9 +96,11 @@ namespace MyDL{
     // ------------------------------------------------------
 
     // コンストラクタ
-    MnistEigenDataset::MnistEigenDataset(int batch_size, bool random_load)
+    MnistEigenDataset::MnistEigenDataset(int batch_size, bool random_load, bool one_hot_label, bool normalize)
     {
         _batch_size = batch_size;
+        _one_hot_label = one_hot_label;
+        _normalize = normalize;
 
         // ファイル読み込み初期化処理
         _init_train_loader();
@@ -121,15 +123,19 @@ namespace MyDL{
     // MatrixXd& train_y  -> 出力：訓練ラベルデータ(batch_size×1 or 10)
     // bool one_hot_label -> 入力：ラベルデータをonehot化するか否かのフラグ(デフォルト：False)
     // bool normalize     -> 入力：データを正規化するか否かのフラグ(デフォルト：True)
-    void MnistEigenDataset::next_train(MatrixXd& train_X, MatrixXd& train_y, bool one_hot_label, bool normalize)
+    void MnistEigenDataset::next_train(MatrixXd& train_X, MatrixXd& train_y)
     {
         // 読み出し用一時変数
         int pixels = _rows * _cols;
         vector<double> tmp_image(pixels); // 配列のサイズ初期化が必要(でないとセグフォ)
         vector<double> tmp_labels(_batch_size);
 
-        if (one_hot_label){
+        train_X = MatrixXd::Zero(_batch_size, pixels);
+
+        if (_one_hot_label){
             train_y = MatrixXd::Zero(_batch_size, 10); // one_hot_label有効化時の初期化
+        } else {
+            train_y = MatrixXd::Zero(_batch_size, 1);
         }
 
         // インデックス取得：初期位置計算
@@ -165,7 +171,7 @@ namespace MyDL{
             tmp_labels[i] = (double)(tmp_label);
 
             // one-hotか否かで場合分け
-            if (one_hot_label){
+            if (_one_hot_label){
                 train_y(i, int(tmp_label)) = 1;
             } else {
                 train_y.row(i) = Map<Matrix<double, 1, 1>>(&(tmp_labels[i]));
@@ -173,7 +179,7 @@ namespace MyDL{
 
         }
 
-        if (normalize) // normalizeをintにキャストし、(1/255)^(normalize)を掛ける処理にすれば、if文を使用する必要はない
+        if (_normalize) // normalizeをintにキャストし、(1/255)^(normalize)を掛ける処理にすれば、if文を使用する必要はない
         {
             train_X /= 255;
         }
@@ -189,7 +195,7 @@ namespace MyDL{
     // MatrixXd& test_y  -> 出力：テストラベルデータ(batch_size×1 or 10)
     // bool one_hot_label -> 入力：ラベルデータをonehot化するか否かのフラグ(デフォルト：False)
     // bool normalize     -> 入力：データを正規化するか否かのフラグ(デフォルト：True)
-    void MnistEigenDataset::next_test(MatrixXd& test_X, MatrixXd& test_y, bool one_hot_label, bool normalize)
+    void MnistEigenDataset::next_test(MatrixXd& test_X, MatrixXd& test_y)
     {
 
         // 読み出し用一時変数
@@ -197,9 +203,13 @@ namespace MyDL{
         vector<double> tmp_image(pixels); // 配列のサイズ初期化が必要(でないとセグフォ)
         vector<double> tmp_labels(_batch_size);
 
-        if (one_hot_label)
+        test_X = MatrixXd::Zero(_batch_size, pixels);
+
+        if (_one_hot_label)
         {
             test_y = MatrixXd::Zero(_batch_size, 10); // one_hot_label有効化時の初期化
+        } else {
+            test_y = MatrixXd::Zero(_batch_size, 1);
         }
 
         // インデックス取得：初期位置計算
@@ -233,7 +243,7 @@ namespace MyDL{
             tmp_labels[i] = (double)(tmp_label);
 
             // one-hotか否かで場合分け
-            if (one_hot_label)
+            if (_one_hot_label)
             {
                 test_y(i, int(tmp_label)) = 1;
             }
@@ -243,7 +253,7 @@ namespace MyDL{
             }
         }
 
-        if (normalize)
+        if (_normalize)
         {
             test_X /= 255;
         }

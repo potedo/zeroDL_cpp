@@ -54,7 +54,7 @@ int main()
     // 最適化実行
     for (int i = 0; i < num_iters; i++){
         // 次のミニバッチ取得
-        mnist.next_train(train_X, train_y, one_hot_label);
+        mnist.next_train(train_X, train_y);
         
         // 勾配計算
         grads = net.gradient(train_X, train_y); // 内部で
@@ -73,7 +73,7 @@ int main()
 
         // 10step毎にaccuracy計測
         if (i % 10 == 0){
-            mnist.next_test(test_X, test_y, one_hot_label);
+            mnist.next_test(test_X, test_y);
             accuracy = net.accuracy(test_X, test_y);
 
             cout << "accuracy: " << accuracy << endl;

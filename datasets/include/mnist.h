@@ -6,6 +6,7 @@
 #include <vector>
 #include <fstream>
 #include <Eigen/Dense>
+#include "../../include/dataset.h"
 
 namespace MyDL{
 
@@ -28,7 +29,7 @@ namespace MyDL{
     // ---------------------------------------------
     //              Eigen用 MNISTローダ
     // ---------------------------------------------
-    class MnistEigenDataset
+    class MnistEigenDataset: public Dataset
     {
 
         private:
@@ -64,20 +65,23 @@ namespace MyDL{
             int _rows = 0;
             int _cols = 0;
 
+            bool _one_hot_label;
+            bool _normalize;
+
         private:
             void _init_train_loader(void); // インデックスのシャッフルは初期化関数の外で行う
             void _init_test_loader(void);
 
         public:
             MnistEigenDataset(){}; // デフォルトコンストラクタ
-            MnistEigenDataset(const int batch_size, bool random_load=true);
+            MnistEigenDataset(const int batch_size, bool random_load=true, bool one_hot_label=true, bool normalize=true);
             void set_train_image_filepath(string);
             void set_train_label_filepath(string);
             void set_test_image_filepath(string);
             void set_test_label_filepath(string);
             void initialize_loader(void);
-            void next_train(MatrixXd &, MatrixXd &, bool one_hot_label=false, bool normalize=true);
-            void next_test(MatrixXd &, MatrixXd &, bool one_hot_label=false, bool normalize=true);
+            void next_train(MatrixXd &, MatrixXd &);
+            void next_test(MatrixXd &, MatrixXd &);
 
     };
 }

@@ -79,7 +79,7 @@ int main()
     // ----------------------
     for (int i = 0; i < num_iters; i++)
     {
-        mnist.next_train(train_X, train_y, true, true);
+        mnist.next_train(train_X, train_y);
         inputs.push_back(train_X);
         // inputs.push_back(train_y);
 
@@ -110,7 +110,7 @@ int main()
 
         if (i % 10 == 0)
         {
-            mnist.next_test(test_X, test_y, true, true);
+            mnist.next_test(test_X, test_y);
             val_inputs.push_back(test_X);
             // val_inputs.push_back(test_y);
             accuracy = net.accuracy(val_inputs, test_y);

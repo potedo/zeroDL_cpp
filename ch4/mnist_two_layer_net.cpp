@@ -26,7 +26,8 @@ int main(){
     bool one_hot_label = true;
 
     TwoLayerNet net(input_size, hidden_size, output_size, 0.01);
-    mnist.next_train(train_X, train_y, one_hot_label);
+    // mnist.next_train(train_X, train_y, one_hot_label);
+    mnist.next_train(train_X, train_y);
 
     MatrixXd pred_y;
     double loss, accuracy;

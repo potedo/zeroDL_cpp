@@ -4,4 +4,5 @@ add_library(mnist STATIC mnist.cpp)
 # 指定しているのは datasets/include であることに注意
 target_include_directories(zeroDL
     PUBLIC ../include
+    PUBLIC ../../include/
 )
