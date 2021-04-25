@@ -74,16 +74,16 @@ int main()
     {
         mnist.next_train(train_X, train_y);
         inputs.push_back(train_X);
-        inputs.push_back(train_y);
+        // inputs.push_back(train_y);
 
         // Back Propagation
-        grads = model.gradient(inputs);
+        grads = model.gradient(inputs, train_y);
 
         // Update Prameters
         optimizer.update(model.params, grads);
 
         // Loss Calculation
-        loss = model.loss(inputs);
+        loss = model.loss(inputs, train_y);
         loss_history[i] = loss[0](0);
         loss_counter[i] = i;
 
@@ -93,8 +93,8 @@ int main()
         {
             mnist.next_test(test_X, test_y);
             val_inputs.push_back(test_X);
-            val_inputs.push_back(test_y);
-            accuracy = model.accuracy(val_inputs);
+            // val_inputs.push_back(test_y);
+            accuracy = model.accuracy(val_inputs, test_y);
             cout << "accuracy: " << accuracy << endl;
             val_inputs.clear();
             accuracy_history[i / 10] = accuracy;

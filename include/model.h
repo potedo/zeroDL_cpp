@@ -26,9 +26,9 @@ namespace MyDL{
 
         public:
             virtual vector<MatrixXd> predict(vector<MatrixXd>) = 0;
-            virtual vector<MatrixXd> loss(vector<MatrixXd>) = 0;
-            virtual double accuracy(vector<MatrixXd>) = 0;
-            virtual unordered_map<string, MatrixXd> gradient(vector<MatrixXd>) = 0;
+            virtual vector<MatrixXd> loss(vector<MatrixXd>, MatrixXd&) = 0;
+            virtual double accuracy(vector<MatrixXd>, MatrixXd&) = 0;
+            virtual unordered_map<string, MatrixXd> gradient(vector<MatrixXd>, MatrixXd&) = 0;
             virtual unordered_map<string, shared_ptr<MatrixXd>> get_params(void) = 0; // Trainerクラスでパラメータを呼び出すのに必要。これを使えば直接model->paramsとかしなくて済むのでは
     };
 
@@ -52,36 +52,40 @@ namespace MyDL{
                         int output_size = 1,
                         double weight_init_std = 0.01); // デフォルトコンストラクタ
             vector<MatrixXd> predict(vector<MatrixXd>);
-            vector<MatrixXd> loss(vector<MatrixXd>); // 内部的にSoftmaxWithLossのforwardを利用するので返り値もvector型
-            double accuracy(vector<MatrixXd>);
-            unordered_map<string, MatrixXd> gradient(vector<MatrixXd>);
-            unordered_map<string, MatrixXd> numerical_gradient(vector<MatrixXd>);
+            vector<MatrixXd> loss(vector<MatrixXd>, MatrixXd&); // 内部的にSoftmaxWithLossのforwardを利用するので返り値もvector型
+            double accuracy(vector<MatrixXd>, MatrixXd&);
+            unordered_map<string, MatrixXd> gradient(vector<MatrixXd>, MatrixXd&);
+            // unordered_map<string, MatrixXd> numerical_gradient(vector<MatrixXd>);
             unordered_map<string, shared_ptr<MatrixXd>> get_params(void){return this->params;}; // Trainerクラスでパラメータを呼び出すのに必要。これを使えば直接model->paramsとかしなくて済むのでは
     };
 
-    // class MultiLayerNet: public BaseModel
-    // {
-    //     private:
-    //         int _input_size;
-    //         vector<int> _hidden_size_list;
-    //         int _output_size;
-    //         int _hidden_layer_num;
-    //         double _weight_decay_lambda;
-    //         // unordered_map<string, shared_ptr<BaseLayer>> _layers;
-    //         vector<string> _layer_list;
-    //         shared_ptr<BaseLayer> _last_layer;
+    class MultiLayerModel: public BaseModel
+    {
+        private:
+            int _input_size;
+            vector<int> _hidden_size_list;
+            int _output_size;
+            int _hidden_layer_num;
+            double _weight_decay_lambda;
+            unordered_map<string, shared_ptr<BaseLayer>> _layers;
+            vector<string> _layer_list;
+            shared_ptr<BaseLayer> _last_layer;
 
-    //     public:
-    //         unordered_map<string, shared_ptr<BaseLayer>> _layers; // デバッグ用にpublicへ移動
-    //         unordered_map<string, shared_ptr<MatrixXd>> params;
+        public:
+            // unordered_map<string, shared_ptr<BaseLayer>> _layers; // デバッグ用にpublicへ移動
+            unordered_map<string, shared_ptr<MatrixXd>> params;
 
-    //     public:
-    //         MultiLayerNet(const int, const vector<int>, const int, const double weight_decay_lambda = 0);
-    //         vector<MatrixXd> predict(vector<MatrixXd>);
-    //         vector<MatrixXd> loss(vector<MatrixXd>, MatrixXd &);
-    //         double accuracy(vector<MatrixXd>, MatrixXd &);
-    //         unordered_map<string, MatrixXd> gradient(vector<MatrixXd>, MatrixXd &);
-    //     };
+        public:
+            MultiLayerModel(const int,
+                            const vector<int>, 
+                            const int, 
+                            const double weight_decay_lambda = 0);
+            vector<MatrixXd> predict(vector<MatrixXd>);
+            vector<MatrixXd> loss(vector<MatrixXd>, MatrixXd &);
+            double accuracy(vector<MatrixXd>, MatrixXd &);
+            unordered_map<string, MatrixXd> gradient(vector<MatrixXd>, MatrixXd &);
+            unordered_map<string, shared_ptr<MatrixXd>> get_params(void){return this->params;};
+        };
 }
 
 #endif //_MODEL_H_

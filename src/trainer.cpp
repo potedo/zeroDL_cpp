@@ -43,14 +43,13 @@ namespace MyDL{
         _dataset->next_train(train_X, train_y);
 
         inputs.push_back(train_X);
-        inputs.push_back(train_y);
 
-        grads = _model->gradient(inputs);
+        grads = _model->gradient(inputs, train_y);
         params = _model->get_params();
 
         _optimizer->update(params, grads);
 
-        loss = _model->loss(inputs);
+        loss = _model->loss(inputs, train_y);
         train_loss_history.push_back(double(loss[0](0)));
 
         if (_verbose)
@@ -67,11 +66,10 @@ namespace MyDL{
             _dataset->next_test(test_X, test_y);
 
             val_inputs.push_back(test_X);
-            val_inputs.push_back(test_y);
 
             double train_acc, test_acc;
-            train_acc = _model->accuracy(inputs);
-            test_acc = _model->accuracy(val_inputs);
+            train_acc = _model->accuracy(inputs, train_y);
+            test_acc = _model->accuracy(val_inputs, test_y);
 
             train_acc_history.push_back(train_acc);
             test_acc_history.push_back(test_acc);
@@ -98,11 +96,11 @@ namespace MyDL{
         vector<MatrixXd> val_inputs;
 
         // 本当はすべてのテストデータを突っ込む形にしたい
+        // -> ループで実装し、得られたaccuracyの平均を求めればOK?
         _dataset->next_test(test_X, test_y);
         val_inputs.push_back(test_X);
-        val_inputs.push_back(test_y);
 
-        double test_acc = _model->accuracy(val_inputs);
+        double test_acc = _model->accuracy(val_inputs, test_y);
 
         if (_verbose)
         {

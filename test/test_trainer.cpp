@@ -28,6 +28,8 @@ int main()
 
     int epochs = 2;
 
+    // model_creator()とか実装して、それに基づいてshared_ptrを返すようにした方が作りやすい？(I/Fを気にしなくて済む)
+    // 可変長引数の仕組みとテンプレート関数の仕組みを確認して作成する。一旦無視してやってみる。
     auto model = make_shared<TwoLayerMLP>(input_size, hidden_size, output_size);
     auto optimizer = make_shared<SGD>(learning_rate);
     auto dataset = make_shared<MnistEigenDataset>(batch_size);

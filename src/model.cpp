@@ -102,28 +102,26 @@ namespace MyDL
         return X;
     }
 
-    vector<MatrixXd> TwoLayerMLP::loss(vector<MatrixXd> inputs)
+    vector<MatrixXd> TwoLayerMLP::loss(vector<MatrixXd> inputs, MatrixXd& t)
     {
         vector<MatrixXd> pred_input, pred_out, loss_inputs, loss_output;
         pred_input.push_back(inputs[0]);
         pred_out = predict(pred_input);
 
-        loss_inputs = inputs;
-        loss_inputs[0] = pred_out[0];
+        loss_inputs.push_back(pred_out[0]);
+        loss_inputs.push_back(t);
 
         loss_output = _last_layer->forward(loss_inputs);
         return loss_output;
     }
 
-    double TwoLayerMLP::accuracy(vector<MatrixXd> inputs)
+    double TwoLayerMLP::accuracy(vector<MatrixXd> inputs, MatrixXd& t)
     {
-        vector<MatrixXd> pred_input, pred_out;
-        pred_input.push_back(inputs[0]);
-        pred_out = predict(pred_input);
+        vector<MatrixXd> pred_out;
+        pred_out = predict(inputs);
 
-        MatrixXd y, t;
+        MatrixXd y;
         y = pred_out[0];
-        t = inputs[1];
         double batch_size = t.rows();
         double accuracy = 0;
 
@@ -139,11 +137,11 @@ namespace MyDL
         return accuracy / batch_size;
     }
 
-    unordered_map<string, MatrixXd> TwoLayerMLP::gradient(vector<MatrixXd> inputs)
+    unordered_map<string, MatrixXd> TwoLayerMLP::gradient(vector<MatrixXd> inputs, MatrixXd& t)
     {
         // Forward
         vector<MatrixXd> output;
-        output = loss(inputs); // forward -> 逆伝播計算に必要な情報を各レイヤにキャッシュ
+        output = loss(inputs, t); // forward -> 逆伝播計算に必要な情報を各レイヤにキャッシュ
 
         // Backward
         vector<MatrixXd> dout, tmp_dout;
@@ -182,173 +180,173 @@ namespace MyDL
         return grads;
     }
 
-    unordered_map<string, MatrixXd> TwoLayerMLP::numerical_gradient(vector<MatrixXd> inputs)
-    {
-        // [&]は、スコープ外の変数を参照するというキャプチャー(ここではthisポインタを使うために指定)
-        std::function<vector<MatrixXd>(MatrixXd)> loss_W = [this, &inputs](MatrixXd W) -> vector<MatrixXd> { return this->loss(inputs); };
-        std::function<vector<MatrixXd>(VectorXd)> loss_W2 = [this, &inputs](VectorXd W) -> vector<MatrixXd> { return this->loss(inputs); };
-        unordered_map<string, MatrixXd> grads;
+    // unordered_map<string, MatrixXd> TwoLayerMLP::numerical_gradient(vector<MatrixXd> inputs)
+    // {
+    //     // [&]は、スコープ外の変数を参照するというキャプチャー(ここではthisポインタを使うために指定)
+    //     std::function<vector<MatrixXd>(MatrixXd)> loss_W = [this, &inputs](MatrixXd W) -> vector<MatrixXd> { return this->loss(inputs); };
+    //     std::function<vector<MatrixXd>(VectorXd)> loss_W2 = [this, &inputs](VectorXd W) -> vector<MatrixXd> { return this->loss(inputs); };
+    //     unordered_map<string, MatrixXd> grads;
 
-        MatrixXd dW1, dW2, db1, db2;
+    //     MatrixXd dW1, dW2, db1, db2;
 
-        // 直接内部のレイヤのパラメータにアクセスするので、ダウンキャストが必要
-        if (shared_ptr<MyDL::Affine> affine1 = std::dynamic_pointer_cast<MyDL::Affine>(_layers["Affine1"]))
-        {
-            dW1 = MyDL::numerical_gradient(loss_W, affine1->_W);
-            db1 = MyDL::numerical_gradient(loss_W2, affine1->_b);
-        }
-        if (shared_ptr<MyDL::Affine> affine2 = std::dynamic_pointer_cast<MyDL::Affine>(_layers["Affine2"]))
-        {
-            dW2 = MyDL::numerical_gradient(loss_W, affine2->_W);
-            db2 = MyDL::numerical_gradient(loss_W2, affine2->_b);
-        }
+    //     // 直接内部のレイヤのパラメータにアクセスするので、ダウンキャストが必要
+    //     if (shared_ptr<MyDL::Affine> affine1 = std::dynamic_pointer_cast<MyDL::Affine>(_layers["Affine1"]))
+    //     {
+    //         dW1 = MyDL::numerical_gradient(loss_W, affine1->_W);
+    //         db1 = MyDL::numerical_gradient(loss_W2, affine1->_b);
+    //     }
+    //     if (shared_ptr<MyDL::Affine> affine2 = std::dynamic_pointer_cast<MyDL::Affine>(_layers["Affine2"]))
+    //     {
+    //         dW2 = MyDL::numerical_gradient(loss_W, affine2->_W);
+    //         db2 = MyDL::numerical_gradient(loss_W2, affine2->_b);
+    //     }
 
-        grads["dW1"] = dW1;
-        grads["dW2"] = dW2;
-        grads["db1"] = db1;
-        grads["db2"] = db2;
+    //     grads["dW1"] = dW1;
+    //     grads["dW2"] = dW2;
+    //     grads["db1"] = db1;
+    //     grads["db2"] = db2;
 
-        return grads;
-    }
+    //     return grads;
+    // }
 
     // -----------------------------------------------------------
-    // MultiLayerNet: Weight Decay の検証用
+    // MultiLayerModel: Weight Decay の検証用
     // 【21/04/06】
     // とりあえず動作することを目指すので、最初はreluで構成
     // 後ほどsigmoid含めて動くように変更。初期値も XavierとHeの両方を選択できるようにする。
     // -----------------------------------------------------------
 
-    // MultiLayerNet::MultiLayerNet(const int input_size,
-    //                              const vector<int> hidden_size,
-    //                              const int output_size,
-    //                              const double weight_decay_lambda)
-    // {
-    //     _input_size = input_size;
-    //     _hidden_size_list = hidden_size;
-    //     _output_size = output_size;
-    //     _weight_decay_lambda = weight_decay_lambda;
+    MultiLayerModel::MultiLayerModel(const int input_size,
+                                     const vector<int> hidden_size,
+                                     const int output_size,
+                                     const double weight_decay_lambda)
+    {
+        _input_size = input_size;
+        _hidden_size_list = hidden_size;
+        _output_size = output_size;
+        _weight_decay_lambda = weight_decay_lambda;
 
-    //     // 各パラメータの初期化
+        // 各パラメータの初期化
 
-    //     _layers["Affine1"] = make_shared<MyDL::Affine>(_input_size, _hidden_size_list[0]);
-    //     _layers["ReLU1"] = make_shared<ReLU>();
-    //     _layer_list.push_back("Affine1");
-    //     _layer_list.push_back("ReLU1");
-    //     for (int i = 0; i < _hidden_size_list.size() - 1; i++)
-    //     {
-    //         string tmp_num_str = std::to_string(i + 2);
-    //         _layers["Affine" + tmp_num_str] = make_shared<MyDL::Affine>(_hidden_size_list[i], _hidden_size_list[i + 1]);
-    //         _layers["ReLU" + tmp_num_str] = make_shared<ReLU>();
-    //         _layer_list.push_back("Affine" + tmp_num_str);
-    //         _layer_list.push_back("ReLU" + tmp_num_str);
-    //     }
-    //     string tmp_num_str = std::to_string(_hidden_size_list.size() + 1);
-    //     _layers["Affine" + tmp_num_str] = make_shared<MyDL::Affine>(_hidden_size_list[_hidden_size_list.size() - 1], _output_size);
-    //     _layers["ReLU" + tmp_num_str] = make_shared<ReLU>();
-    //     _layer_list.push_back("Affine" + tmp_num_str);
-    //     _layer_list.push_back("ReLU" + tmp_num_str);
+        _layers["Affine1"] = make_shared<MyDL::Affine>(_input_size, _hidden_size_list[0]);
+        _layers["ReLU1"] = make_shared<ReLU>();
+        _layer_list.push_back("Affine1");
+        _layer_list.push_back("ReLU1");
+        for (int i = 0; i < _hidden_size_list.size() - 1; i++)
+        {
+            string tmp_num_str = std::to_string(i + 2);
+            _layers["Affine" + tmp_num_str] = make_shared<MyDL::Affine>(_hidden_size_list[i], _hidden_size_list[i + 1]);
+            _layers["ReLU" + tmp_num_str] = make_shared<ReLU>();
+            _layer_list.push_back("Affine" + tmp_num_str);
+            _layer_list.push_back("ReLU" + tmp_num_str);
+        }
+        string tmp_num_str = std::to_string(_hidden_size_list.size() + 1);
+        _layers["Affine" + tmp_num_str] = make_shared<MyDL::Affine>(_hidden_size_list[_hidden_size_list.size() - 1], _output_size);
+        _layers["ReLU" + tmp_num_str] = make_shared<ReLU>();
+        _layer_list.push_back("Affine" + tmp_num_str);
+        _layer_list.push_back("ReLU" + tmp_num_str);
 
-    //     _last_layer = make_shared<SoftmaxWithLoss>(); // Loss Layer
+        _last_layer = make_shared<SoftmaxWithLoss>(); // Loss Layer
 
-    //     for (int layer_num = 1; layer_num <= _hidden_size_list.size() + 1; layer_num++)
-    //     {
-    //         if (auto cast_affine = std::dynamic_pointer_cast<MyDL::Affine>(_layers["Affine" + std::to_string(layer_num)]))
-    //         {
-    //             params["W" + std::to_string(layer_num)] = cast_affine->pW;
-    //             params["b" + std::to_string(layer_num)] = cast_affine->pb;
-    //         }
-    //     }
-    // }
+        for (int layer_num = 1; layer_num <= _hidden_size_list.size() + 1; layer_num++)
+        {
+            if (auto cast_affine = std::dynamic_pointer_cast<MyDL::Affine>(_layers["Affine" + std::to_string(layer_num)]))
+            {
+                params["W" + std::to_string(layer_num)] = cast_affine->pW;
+                params["b" + std::to_string(layer_num)] = cast_affine->pb;
+            }
+        }
+    }
 
-    // vector<MatrixXd> MultiLayerNet::predict(vector<MatrixXd> inputs)
-    // {
-    //     vector<MatrixXd> X = inputs;
-    //     vector<MatrixXd> tmp_X;
+    vector<MatrixXd> MultiLayerModel::predict(vector<MatrixXd> inputs)
+    {
+        vector<MatrixXd> X = inputs;
+        vector<MatrixXd> tmp_X;
 
-    //     for (auto layer : _layer_list)
-    //     {
-    //         tmp_X = _layers[layer]->forward(X);
-    //         X.swap(tmp_X);
-    //     }
-    //     return X;
-    // }
+        for (auto layer : _layer_list)
+        {
+            tmp_X = _layers[layer]->forward(X);
+            X.swap(tmp_X);
+        }
+        return X;
+    }
 
-    // vector<MatrixXd> MultiLayerNet::loss(vector<MatrixXd> inputs, MatrixXd &t)
-    // {
-    //     vector<MatrixXd> pred_input, pred_out, loss_inputs, loss_output;
-    //     pred_input.push_back(inputs[0]);
-    //     pred_out = predict(pred_input);
+    vector<MatrixXd> MultiLayerModel::loss(vector<MatrixXd> inputs, MatrixXd &t)
+    {
+        vector<MatrixXd> pred_input, pred_out, loss_inputs, loss_output;
+        pred_input.push_back(inputs[0]);
+        pred_out = predict(pred_input);
 
-    //     loss_inputs.push_back(pred_out[0]);
-    //     loss_inputs.push_back(t);
+        loss_inputs.push_back(pred_out[0]);
+        loss_inputs.push_back(t);
 
-    //     loss_output = _last_layer->forward(loss_inputs);
+        loss_output = _last_layer->forward(loss_inputs);
 
-    //     // あとは Weight Decay の項も計算してLossに加える
-    //     double weight_decay = 0;
-    //     for (auto param : params)
-    //     {
-    //         weight_decay += 0.5 * _weight_decay_lambda * (*(param.second)).sum();
-    //     }
+        // あとは Weight Decay の項も計算してLossに加える
+        double weight_decay = 0;
+        for (auto param : params)
+        {
+            weight_decay += 0.5 * _weight_decay_lambda * (*(param.second)).sum();
+        }
 
-    //     loss_output[0](0) = loss_output[0](0) + weight_decay;
+        loss_output[0](0) = loss_output[0](0) + weight_decay;
 
-    //     return loss_output;
-    // }
+        return loss_output;
+    }
 
-    // double MultiLayerNet::accuracy(vector<MatrixXd> inputs, MatrixXd &t)
-    // {
-    //     vector<MatrixXd> pred_out;
-    //     pred_out = predict(inputs);
+    double MultiLayerModel::accuracy(vector<MatrixXd> inputs, MatrixXd &t)
+    {
+        vector<MatrixXd> pred_out;
+        pred_out = predict(inputs);
 
-    //     MatrixXd y;
-    //     y = pred_out[0];
-    //     double batch_size = t.rows();
-    //     double accuracy = 0;
+        MatrixXd y;
+        y = pred_out[0];
+        double batch_size = t.rows();
+        double accuracy = 0;
 
-    //     MatrixXd::Index y_row, y_col, t_row, t_col;
-    //     for (int i = 0; i < batch_size; i++)
-    //     {
-    //         y.row(i).maxCoeff(&y_row, &y_col);
-    //         t.row(i).maxCoeff(&t_row, &t_col);
+        MatrixXd::Index y_row, y_col, t_row, t_col;
+        for (int i = 0; i < batch_size; i++)
+        {
+            y.row(i).maxCoeff(&y_row, &y_col);
+            t.row(i).maxCoeff(&t_row, &t_col);
 
-    //         accuracy += (double)(y_col == t_col);
-    //     }
+            accuracy += (double)(y_col == t_col);
+        }
 
-    //     return accuracy / batch_size;
-    // }
+        return accuracy / batch_size;
+    }
 
-    // unordered_map<string, MatrixXd> MultiLayerNet::gradient(vector<MatrixXd> inputs, MatrixXd &t)
-    // {
-    //     // Forward
-    //     vector<MatrixXd> output;
-    //     output = loss(inputs, t);
+    unordered_map<string, MatrixXd> MultiLayerModel::gradient(vector<MatrixXd> inputs, MatrixXd &t)
+    {
+        // Forward
+        vector<MatrixXd> output;
+        output = loss(inputs, t);
 
-    //     // Backward
-    //     vector<MatrixXd> dout, tmp_dout;
-    //     dout.push_back(MatrixXd::Ones(1, 1));
+        // Backward
+        vector<MatrixXd> dout, tmp_dout;
+        dout.push_back(MatrixXd::Ones(1, 1));
 
-    //     dout = _last_layer->backward(dout);
+        dout = _last_layer->backward(dout);
 
-    //     for (auto it = _layer_list.rbegin(); it != _layer_list.rend(); it++)
-    //     {
-    //         string layer = *it;
-    //         tmp_dout = _layers[layer]->backward(dout);
-    //         dout.swap(tmp_dout);
-    //     }
+        for (auto it = _layer_list.rbegin(); it != _layer_list.rend(); it++)
+        {
+            string layer = *it;
+            tmp_dout = _layers[layer]->backward(dout);
+            dout.swap(tmp_dout);
+        }
 
-    //     unordered_map<string, MatrixXd> grads;
+        unordered_map<string, MatrixXd> grads;
 
-    //     for (int i = 1; i <= _hidden_size_list.size() + 1; i++)
-    //     {
-    //         if (auto tmp_affine = std::dynamic_pointer_cast<MyDL::Affine>(_layers["Affine" + std::to_string(i)]))
-    //         {
-    //             grads["W" + std::to_string(i)] = tmp_affine->dW + _weight_decay_lambda * (*(tmp_affine->pW));
-    //             grads["b" + std::to_string(i)] = tmp_affine->db;
-    //         }
-    //     }
+        for (int i = 1; i <= _hidden_size_list.size() + 1; i++)
+        {
+            if (auto tmp_affine = std::dynamic_pointer_cast<MyDL::Affine>(_layers["Affine" + std::to_string(i)]))
+            {
+                grads["W" + std::to_string(i)] = tmp_affine->dW + _weight_decay_lambda * (*(tmp_affine->pW));
+                grads["b" + std::to_string(i)] = tmp_affine->db;
+            }
+        }
 
-    //     return grads;
-    // }
+        return grads;
+    }
 
 }
