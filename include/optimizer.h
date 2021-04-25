@@ -13,7 +13,13 @@ namespace MyDL
     using std::shared_ptr;
     using std::unordered_map;
 
-    class SGD
+    class Optimizer
+    {
+        public:
+            virtual void update(unordered_map<string, shared_ptr<MatrixXd>>&, unordered_map<string, MatrixXd>&)=0;
+    };
+
+    class SGD: public Optimizer
     {
     private:
         double _learning_rate;
@@ -25,7 +31,7 @@ namespace MyDL
     };
 
 
-    class Momentum
+    class Momentum: public Optimizer
     {
         private:
             double _learning_rate;
@@ -39,7 +45,7 @@ namespace MyDL
     };
 
 
-    class AdaGrad
+    class AdaGrad: public Optimizer
     {
         private:
             double _learning_rate;
@@ -51,7 +57,7 @@ namespace MyDL
     };
 
 
-    class RMSprop
+    class RMSprop: public Optimizer
     {
         private:
             double _learning_rate;
@@ -64,7 +70,7 @@ namespace MyDL
     };
 
 
-    class Adam
+    class Adam: public Optimizer
     {
         private:
             double _learning_rate;

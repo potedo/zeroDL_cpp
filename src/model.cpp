@@ -66,24 +66,24 @@ namespace MyDL
 
         // unordered_mapでは追加順が保存されないので、別途順番通り名称を格納したコンテナを用意
         _layer_list.push_back("Affine1");
-        _layer_list.push_back("BatchNorm"); // for batchnorm debug 21/03/21追加
+        // _layer_list.push_back("BatchNorm"); // for batchnorm debug 21/03/21追加
         _layer_list.push_back("ReLU1");
         _layer_list.push_back("Affine2");
 
         // ------------------------------------------------
         // for batchnorm debug 21/03/21追加
         // ------------------------------------------------
-        auto gamma = make_shared<MatrixXd>(1, hidden_size);
-        auto beta = make_shared<MatrixXd>(1, hidden_size);
-        *gamma = weight_init_std * MatrixXd::Random(1, hidden_size);
-        *beta = MatrixXd::Zero(1, hidden_size);
-        shared_ptr<BaseLayer> batch_norm = make_shared<BatchNorm>(gamma, beta);
-        _layers["BatchNorm"] = batch_norm;
-        if (auto cast_batchnorm = std::dynamic_pointer_cast<BatchNorm>(_layers["BatchNorm"]))
-        {
-            params["gamma"] = cast_batchnorm->pgamma;
-            params["beta"] = cast_batchnorm->pbeta;
-        }
+        // auto gamma = make_shared<MatrixXd>(1, hidden_size);
+        // auto beta = make_shared<MatrixXd>(1, hidden_size);
+        // *gamma = weight_init_std * MatrixXd::Random(1, hidden_size);
+        // *beta = MatrixXd::Zero(1, hidden_size);
+        // shared_ptr<BaseLayer> batch_norm = make_shared<BatchNorm>(gamma, beta);
+        // _layers["BatchNorm"] = batch_norm;
+        // if (auto cast_batchnorm = std::dynamic_pointer_cast<BatchNorm>(_layers["BatchNorm"]))
+        // {
+        //     params["gamma"] = cast_batchnorm->pgamma;
+        //     params["beta"] = cast_batchnorm->pbeta;
+        // }
     }
 
     vector<MatrixXd> TwoLayerMLP::predict(vector<MatrixXd> inputs)

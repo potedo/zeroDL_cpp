@@ -43,4 +43,5 @@ target_link_libraries(train_two_layer_mlp
 target_link_libraries(test_trainer
     zeroDLcpp
     mnist
+    ${PYTHON_LIBRARIES}
 )

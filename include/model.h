@@ -22,11 +22,14 @@ namespace MyDL{
     
     class BaseModel
     {
-    public:
-        virtual vector<MatrixXd> predict(vector<MatrixXd>) = 0;
-        virtual vector<MatrixXd> loss(vector<MatrixXd>) = 0;
-        virtual double accuracy(vector<MatrixXd>) = 0;
-        virtual unordered_map<string, MatrixXd> gradient(vector<MatrixXd>) = 0;
+        public:
+
+        public:
+            virtual vector<MatrixXd> predict(vector<MatrixXd>) = 0;
+            virtual vector<MatrixXd> loss(vector<MatrixXd>) = 0;
+            virtual double accuracy(vector<MatrixXd>) = 0;
+            virtual unordered_map<string, MatrixXd> gradient(vector<MatrixXd>) = 0;
+            virtual unordered_map<string, shared_ptr<MatrixXd>> get_params(void) = 0; // Trainerクラスでパラメータを呼び出すのに必要。これを使えば直接model->paramsとかしなくて済むのでは
     };
 
 
@@ -53,6 +56,7 @@ namespace MyDL{
             double accuracy(vector<MatrixXd>);
             unordered_map<string, MatrixXd> gradient(vector<MatrixXd>);
             unordered_map<string, MatrixXd> numerical_gradient(vector<MatrixXd>);
+            unordered_map<string, shared_ptr<MatrixXd>> get_params(void){return this->params;}; // Trainerクラスでパラメータを呼び出すのに必要。これを使えば直接model->paramsとかしなくて済むのでは
     };
 
     // class MultiLayerNet: public BaseModel

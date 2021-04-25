@@ -82,7 +82,8 @@ namespace MyDL{
             void initialize_loader(void);
             void next_train(MatrixXd &, MatrixXd &);
             void next_test(MatrixXd &, MatrixXd &);
-
+            int get_train_size(void){return 60000;}; // Trainerクラスで使用
+            int get_batch_size(void){return _batch_size;}; // Trainerクラスで使用
     };
 }
 
