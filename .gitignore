@@ -2,3 +2,5 @@ build/
 .vscode/
 datasets/data/
 *.png
+sandbox/
+github_lib/

@@ -246,8 +246,8 @@ namespace MyDL
     {
         auto gamma = std::make_shared<MatrixXd>(1, input_size);
         auto beta  = std::make_shared<MatrixXd>(1, input_size);
-        *gamma = weight_init_std * MatrixXd::Random(1, input_size);
-        *beta  = weight_init_std * MatrixXd::Random(1, input_size);
+        *gamma = weight_init_std * MatrixXd::Random(1, input_size); // Onesで初期化する方が良い？
+        *beta  = weight_init_std * MatrixXd::Random(1, input_size); // Zerosで初期化する方が良い？
 
         pgamma = gamma;
         pbeta  = beta;

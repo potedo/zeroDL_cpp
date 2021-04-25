@@ -85,7 +85,8 @@ namespace MyDL{
             double accuracy(vector<MatrixXd>, MatrixXd &);
             unordered_map<string, MatrixXd> gradient(vector<MatrixXd>, MatrixXd &);
             unordered_map<string, shared_ptr<MatrixXd>> get_params(void){return this->params;};
-        };
+    };
+
 }
 
 #endif //_MODEL_H_

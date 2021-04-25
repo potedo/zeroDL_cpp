@@ -227,6 +227,7 @@ namespace MyDL
         _weight_decay_lambda = weight_decay_lambda;
 
         // 各パラメータの初期化
+        // Xavier と He の初期値に関しては、Affine のコンストラクタに渡す weight_init_std のパラメータを変更することで対応する
 
         _layers["Affine1"] = make_shared<MyDL::Affine>(_input_size, _hidden_size_list[0]);
         _layers["ReLU1"] = make_shared<ReLU>();

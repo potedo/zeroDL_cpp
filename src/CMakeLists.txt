@@ -8,6 +8,7 @@ add_library(zeroDLcpp STATIC
     loss.cpp
     trainer.cpp
     numerical_gradient.cpp
+    utils.cpp
 )
 
 target_include_directories(zeroDLcpp

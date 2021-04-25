@@ -60,7 +60,7 @@ namespace MyDL{
 
         if (_current_iter % _iter_per_epoch == 0)
         {
-            _current_iter += 1;
+            _current_epoch += 1;
 
             // accuracyの確認(内部的にエポックごとに確認する機構を設ける)
             _dataset->next_test(test_X, test_y);
