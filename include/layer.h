@@ -135,7 +135,8 @@ namespace MyDL{
 
         public:
             BatchNorm(){};
-            BatchNorm(const int, const double weight_init_std=0.01, const double momentum=0.9);
+            BatchNorm(const int, const double momentum=0.9);
+            // BatchNorm(const int, const double weight_init_std=0.01, const double momentum=0.9);
             BatchNorm(const shared_ptr<MatrixXd>, const shared_ptr<MatrixXd>, double momentum=0.9);
             vector<MatrixXd> forward(vector<MatrixXd>); // 推論用 -> train_flgを別管理にするか、APIをすべて統一するか？
             vector<MatrixXd> backward(vector<MatrixXd>);
@@ -149,6 +150,7 @@ namespace MyDL{
             Matrix<bool, Dynamic, Dynamic> _mask; // 実行時にサイズ決定できないか？(double Dynamic Dynamicが実体なので)
         public:
             Dropout(){};
+            Dropout(const double dropout_ratio=0.5);
             Dropout(const int, const int, const double dropout_ratio=0.5); // 実行時にサイズ決定できる場合には、最初の2つの引数(int)が不要
             vector<MatrixXd> forward(vector<MatrixXd>);
             vector<MatrixXd> backward(vector<MatrixXd>);

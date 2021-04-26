@@ -239,23 +239,37 @@ namespace MyDL
         _avg_mean = VectorXd::Zero(cols);
         _avg_var  = VectorXd::Zero(cols);
     }
-    // もしかすると、I/Fとしてデータの次元だけ与えるようにして、コンストラクタでパラメータの実体を作成し、shared_ptrを格納する方がきれいに作れる？
-    // affineも同様。同じようにすれば、ネットワークの構築作業がかなり楽になる気がする。
 
-    BatchNorm::BatchNorm(const int input_size, const double weight_init_std, const double momentum)
+
+    BatchNorm::BatchNorm(const int input_size, const double momentum)
     {
         auto gamma = std::make_shared<MatrixXd>(1, input_size);
-        auto beta  = std::make_shared<MatrixXd>(1, input_size);
-        *gamma = weight_init_std * MatrixXd::Random(1, input_size); // Onesで初期化する方が良い？
-        *beta  = weight_init_std * MatrixXd::Random(1, input_size); // Zerosで初期化する方が良い？
+        auto beta = std::make_shared<MatrixXd>(1, input_size);
+        *gamma = MatrixXd::Ones(1, input_size); // Onesで初期化する方が良い？
+        *beta = MatrixXd::Zero(1, input_size);  // Zerosで初期化する方が良い？
 
         pgamma = gamma;
-        pbeta  = beta;
+        pbeta = beta;
         _momentum = momentum;
 
         _avg_mean = VectorXd::Zero(input_size);
-        _avg_var  = VectorXd::Zero(input_size);
+        _avg_var = VectorXd::Zero(input_size);
     }
+
+    // BatchNorm::BatchNorm(const int input_size, const double weight_init_std, const double momentum)
+    // {
+    //     auto gamma = std::make_shared<MatrixXd>(1, input_size);
+    //     auto beta  = std::make_shared<MatrixXd>(1, input_size);
+    //     *gamma = weight_init_std * MatrixXd::Random(1, input_size); // Onesで初期化する方が良い？
+    //     *beta  = weight_init_std * MatrixXd::Random(1, input_size); // Zerosで初期化する方が良い？
+
+    //     pgamma = gamma;
+    //     pbeta  = beta;
+    //     _momentum = momentum;
+
+    //     _avg_mean = VectorXd::Zero(input_size);
+    //     _avg_var  = VectorXd::Zero(input_size);
+    // }
 
 
     vector<MatrixXd> BatchNorm::forward(vector<MatrixXd> inputs)
@@ -351,6 +365,11 @@ namespace MyDL
     // -------------------------------------------------
     //          Dropout
     // -------------------------------------------------
+    Dropout::Dropout(const double dropout_ratio)
+    {
+        _dropout_ratio = dropout_ratio;
+    }
+
     Dropout::Dropout(const int row, const int col, const double dropout_ratio)
     {
         _dropout_ratio = dropout_ratio;
@@ -364,8 +383,9 @@ namespace MyDL
         vector<MatrixXd> outs;
         bool train_flg = Config::getInstance().get_flag();
         int col, row;
-        col = _mask.cols(); // サイズの取得
-        row = _mask.rows(); // サイズの取得
+        col = X.cols(); // サイズの取得
+        row = X.rows(); // サイズの取得
+        _mask = MatrixXd::Zero(row, col).cast<bool>();
 
         // Eigen MatrixXd::Random は -1 ~ 1 の範囲で乱数生成するので、これを0~1の範囲に変更する
         double HI = 1.0;

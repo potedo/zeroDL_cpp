@@ -85,7 +85,10 @@ namespace MyDL{
                             const int,
                             const double weight_decay_lambda = 0,
                             string activation = "relu",
-                            const string weight_initializer="he"); // 指定できる内容「relu」「he」「sigmoid」「xavier」)
+                            const string weight_initializer="he",
+                            const bool use_dropout = false,
+                            const double dropout_ratio = 0.5,
+                            const bool use_batchnorm = false); // 指定できる内容「relu」「he」「sigmoid」「xavier」)
             vector<MatrixXd> predict(vector<MatrixXd>);
             vector<MatrixXd> loss(vector<MatrixXd>, MatrixXd &);
             double accuracy(vector<MatrixXd>, MatrixXd &);

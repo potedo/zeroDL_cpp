@@ -222,7 +222,10 @@ namespace MyDL
                                      const int output_size,
                                      const double weight_decay_lambda,
                                      string activation,
-                                     const string weight_initializer)
+                                     const string weight_initializer,
+                                     const bool use_dropout,
+                                     const double dropout_ratio,
+                                     const bool use_batchnorm)
     {
         _input_size = input_size;
         _hidden_size_list = hidden_size;
@@ -242,6 +245,14 @@ namespace MyDL
             _layers["Affine" + tmp_num_str] = make_shared<MyDL::Affine>(_all_size_list[i-1], _all_size_list[i]);
             _layer_list.push_back("Affine" + tmp_num_str);
 
+            // BatchNormalization
+            if (use_batchnorm)
+            {
+                _layers["BatchNorm" + tmp_num_str] = make_shared<BatchNorm>(_all_size_list[i], 0.9); // パラメータも指定できるようにする？
+                _layer_list.push_back("BatchNorm" + tmp_num_str);
+            }
+
+            // Activation
             if (activation == "relu")
             {
                 _layers["ReLU" + tmp_num_str] = make_shared<ReLU>();
@@ -252,6 +263,14 @@ namespace MyDL
                 _layers["Sigmoid" + tmp_num_str] = make_shared<Sigmoid>();
                 _layer_list.push_back("Sigmoid" + tmp_num_str);
             }
+
+            // Dropout
+            if (use_dropout)
+            {
+                _layers["Dropout" + tmp_num_str] = make_shared<Dropout>(dropout_ratio);
+                _layer_list.push_back("Dropout" + tmp_num_str);
+            }
+
         }
         int last_num = _hidden_size_list.size()+1;
         string last_num_str = std::to_string(last_num);
