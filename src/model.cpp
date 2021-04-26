@@ -236,7 +236,7 @@ namespace MyDL
         std::transform(activation.begin(), activation.end(), activation.begin(), ::tolower);
 
         // Create Layers
-        for (int i = 1; i < _all_size_list.size(); i++)
+        for (int i = 1; i < _hidden_size_list.size()+1; i++)
         {
             string tmp_num_str = std::to_string(i);
             _layers["Affine" + tmp_num_str] = make_shared<MyDL::Affine>(_all_size_list[i-1], _all_size_list[i]);
@@ -253,6 +253,10 @@ namespace MyDL
                 _layer_list.push_back("Sigmoid" + tmp_num_str);
             }
         }
+        int last_num = _hidden_size_list.size()+1;
+        string last_num_str = std::to_string(last_num);
+        _layers["Affine" + last_num_str] = make_shared<MyDL::Affine>(_all_size_list[last_num-1], _all_size_list[last_num]);
+        _layer_list.push_back("Affine" + last_num_str);
 
         _last_layer = make_shared<SoftmaxWithLoss>(); // Loss Layer
 
