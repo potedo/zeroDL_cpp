@@ -78,7 +78,7 @@ int main()
     auto model = make_shared<MultiLayerModel>(input_size,
                                               hidden_list, 
                                               output_size, 
-                                              0.1, 
+                                              0.01, 
                                               "relu", 
                                               "relu",
                                               true,

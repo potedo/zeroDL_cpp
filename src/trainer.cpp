@@ -87,6 +87,9 @@ namespace MyDL{
 
     void Trainer::train(void)
     {
+        // このメソッドを呼び出す場合は必ずTraining Modeにする
+        Config::getInstance().set_flag(true);
+
         for (int i=0; i<_max_iter; i++)
         {
             this->train_step();
