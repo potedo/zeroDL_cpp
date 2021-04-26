@@ -73,8 +73,9 @@ int main()
     vector<int> hidden_list; // MultiLayerModelに差し替えるとき必要
     hidden_list.push_back(hidden_size);
     hidden_list.push_back(hidden_size);
-    auto model = make_shared<MultiLayerModel>(input_size, hidden_list, output_size, 0.1, "sigmoid", "sigmoid");
-    // auto model = make_shared<MultiLayerModel>(input_size, hidden_list, output_size, 0.1, "relu", "relu");
+    hidden_list.push_back(hidden_size);
+    // auto model = make_shared<MultiLayerModel>(input_size, hidden_list, output_size, 0.1, "sigmoid", "sigmoid");
+    auto model = make_shared<MultiLayerModel>(input_size, hidden_list, output_size, 0.1, "relu", "relu");
     auto optimizer = make_shared<SGD>(learning_rate);
     // auto optimizer = make_shared<Adam>(learning_rate*0.01);
     auto dataset = make_shared<MnistEigenDataset>(batch_size);
