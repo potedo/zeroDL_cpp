@@ -114,7 +114,7 @@ namespace MyDL
         vector<MatrixXd> grads;
         MatrixXd dx;
 
-        dx = _y.array() * (MatrixXd::Ones(_y.rows(), _y.cols()) - _y).array();
+        dx = douts[0].array() * (MatrixXd::Ones(_y.rows(), _y.cols()) - _y).array();
 
         grads.push_back(dx);
         return grads;

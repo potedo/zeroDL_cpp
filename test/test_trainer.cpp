@@ -39,6 +39,7 @@ int main()
     double learning_rate;
     int epochs;
 
+    // リストを読み込む形になっていないのでそこは再度作成する
     if (err)
     {
         input_size = 28 * 28;
@@ -68,8 +69,14 @@ int main()
 
     // model_creator()とか実装して、それに基づいてshared_ptrを返すようにした方が作りやすい？(I/Fを気にしなくて済む)
     // 可変長引数の仕組みとテンプレート関数の仕組みを確認して作成する。一旦無視してやってみる。
-    auto model = make_shared<TwoLayerMLP>(input_size, hidden_size, output_size);
+    // auto model = make_shared<TwoLayerMLP>(input_size, hidden_size, output_size);
+    vector<int> hidden_list; // MultiLayerModelに差し替えるとき必要
+    hidden_list.push_back(hidden_size);
+    hidden_list.push_back(hidden_size);
+    auto model = make_shared<MultiLayerModel>(input_size, hidden_list, output_size, 0.1, "sigmoid", "sigmoid");
+    // auto model = make_shared<MultiLayerModel>(input_size, hidden_list, output_size, 0.1, "relu", "relu");
     auto optimizer = make_shared<SGD>(learning_rate);
+    // auto optimizer = make_shared<Adam>(learning_rate*0.01);
     auto dataset = make_shared<MnistEigenDataset>(batch_size);
 
     Trainer trainer(model, optimizer, dataset, epochs=epochs);

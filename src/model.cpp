@@ -2,6 +2,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <algorithm>
 #include <unordered_map>
 #include <functional>
 #include <Eigen/Dense>
@@ -219,37 +220,45 @@ namespace MyDL
     MultiLayerModel::MultiLayerModel(const int input_size,
                                      const vector<int> hidden_size,
                                      const int output_size,
-                                     const double weight_decay_lambda)
+                                     const double weight_decay_lambda,
+                                     string activation,
+                                     const string weight_initializer)
     {
         _input_size = input_size;
         _hidden_size_list = hidden_size;
         _output_size = output_size;
         _weight_decay_lambda = weight_decay_lambda;
 
-        // 各パラメータの初期化
-        // Xavier と He の初期値に関しては、Affine のコンストラクタに渡す weight_init_std のパラメータを変更することで対応する
+        _all_size_list.insert(_all_size_list.end(), {_input_size});
+        _all_size_list.insert(_all_size_list.end(), _hidden_size_list.begin(), _hidden_size_list.end());
+        _all_size_list.insert(_all_size_list.end(), {_output_size});
 
-        _layers["Affine1"] = make_shared<MyDL::Affine>(_input_size, _hidden_size_list[0]);
-        _layers["ReLU1"] = make_shared<ReLU>();
-        _layer_list.push_back("Affine1");
-        _layer_list.push_back("ReLU1");
-        for (int i = 0; i < _hidden_size_list.size() - 1; i++)
+        std::transform(activation.begin(), activation.end(), activation.begin(), ::tolower);
+
+        // Create Layers
+        for (int i = 1; i < _all_size_list.size(); i++)
         {
-            string tmp_num_str = std::to_string(i + 2);
-            _layers["Affine" + tmp_num_str] = make_shared<MyDL::Affine>(_hidden_size_list[i], _hidden_size_list[i + 1]);
-            _layers["ReLU" + tmp_num_str] = make_shared<ReLU>();
+            string tmp_num_str = std::to_string(i);
+            _layers["Affine" + tmp_num_str] = make_shared<MyDL::Affine>(_all_size_list[i-1], _all_size_list[i]);
             _layer_list.push_back("Affine" + tmp_num_str);
-            _layer_list.push_back("ReLU" + tmp_num_str);
+
+            if (activation == "relu")
+            {
+                _layers["ReLU" + tmp_num_str] = make_shared<ReLU>();
+                _layer_list.push_back("ReLU" + tmp_num_str);
+            }
+            else if(activation == "sigmoid") 
+            {
+                _layers["Sigmoid" + tmp_num_str] = make_shared<Sigmoid>();
+                _layer_list.push_back("Sigmoid" + tmp_num_str);
+            }
         }
-        string tmp_num_str = std::to_string(_hidden_size_list.size() + 1);
-        _layers["Affine" + tmp_num_str] = make_shared<MyDL::Affine>(_hidden_size_list[_hidden_size_list.size() - 1], _output_size);
-        _layers["ReLU" + tmp_num_str] = make_shared<ReLU>();
-        _layer_list.push_back("Affine" + tmp_num_str);
-        _layer_list.push_back("ReLU" + tmp_num_str);
 
         _last_layer = make_shared<SoftmaxWithLoss>(); // Loss Layer
 
-        for (int layer_num = 1; layer_num <= _hidden_size_list.size() + 1; layer_num++)
+
+        // Get pointer to Layer Parameters
+        for (int layer_num = 1; layer_num < _all_size_list.size(); layer_num++)
         {
             if (auto cast_affine = std::dynamic_pointer_cast<MyDL::Affine>(_layers["Affine" + std::to_string(layer_num)]))
             {
@@ -257,7 +266,41 @@ namespace MyDL
                 params["b" + std::to_string(layer_num)] = cast_affine->pb;
             }
         }
+
+        // Affine Layerの変数初期化
+        this->_init_weight(weight_initializer);
+
     }
+
+
+    void MultiLayerModel::_init_weight(string weight_initializer)
+    {
+        // weight_initializerの文字列を小文字に変換
+        std::transform(weight_initializer.begin(),
+                       weight_initializer.end(),
+                       weight_initializer.begin(),
+                       ::tolower);
+        
+        double scale = 1;
+
+        if (weight_initializer == "relu" or weight_initializer == "he")
+        {
+            for (int layer_num = 1; layer_num <= _hidden_size_list.size()+1; layer_num++)
+            {
+                scale = sqrt(2.0 / _all_size_list[layer_num-1]);
+                *(params["W" + std::to_string(layer_num)]) = scale * MatrixXd::Random(_all_size_list[layer_num-1], _all_size_list[layer_num]);        
+            }
+        }
+        else if (weight_initializer == "sigmoid" or weight_initializer == "xavier")
+        {
+            for (int layer_num = 1; layer_num <= _hidden_size_list.size() + 1; layer_num++)
+            {
+                scale = sqrt(1.0 / _all_size_list[layer_num - 1]);
+                *(params["W" + std::to_string(layer_num)]) = scale * MatrixXd::Random(_all_size_list[layer_num - 1], _all_size_list[layer_num]);
+            }
+        }
+    }
+
 
     vector<MatrixXd> MultiLayerModel::predict(vector<MatrixXd> inputs)
     {
@@ -349,5 +392,4 @@ namespace MyDL
 
         return grads;
     }
-
 }

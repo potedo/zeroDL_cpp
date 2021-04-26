@@ -65,6 +65,7 @@ namespace MyDL{
             int _input_size;
             vector<int> _hidden_size_list;
             int _output_size;
+            vector<int> _all_size_list;
             int _hidden_layer_num;
             double _weight_decay_lambda;
             unordered_map<string, shared_ptr<BaseLayer>> _layers;
@@ -74,12 +75,17 @@ namespace MyDL{
         public:
             // unordered_map<string, shared_ptr<BaseLayer>> _layers; // デバッグ用にpublicへ移動
             unordered_map<string, shared_ptr<MatrixXd>> params;
+        
+        private:
+            void _init_weight(string); // 引数は weight_initializer
 
         public:
             MultiLayerModel(const int,
                             const vector<int>, 
-                            const int, 
-                            const double weight_decay_lambda = 0);
+                            const int,
+                            const double weight_decay_lambda = 0,
+                            string activation = "relu",
+                            const string weight_initializer="he"); // 指定できる内容「relu」「he」「sigmoid」「xavier」)
             vector<MatrixXd> predict(vector<MatrixXd>);
             vector<MatrixXd> loss(vector<MatrixXd>, MatrixXd &);
             double accuracy(vector<MatrixXd>, MatrixXd &);
