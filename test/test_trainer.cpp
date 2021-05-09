@@ -49,7 +49,7 @@ int main()
         learning_rate = 0.1;
         epochs = 2;
     }
-    else
+    else // こっちが正常系
     {
         input_size = obj["input_size"].get<double>();
         hidden_size = obj["hidden_size"].get<double>();

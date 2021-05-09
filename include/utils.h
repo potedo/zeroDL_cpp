@@ -3,10 +3,15 @@
 
 #include <picojson.h>
 #include <string>
+#include <Eigen/Dense>
 
 namespace MyDL{
 
+    using namespace Eigen;
+
     int load_json(std::string, picojson::object&);
+
+    // MatrixXd im2col(MatrixXd, int, int, int, int, int, int, int);
 
 }
 

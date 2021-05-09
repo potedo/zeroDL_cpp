@@ -37,4 +37,13 @@ namespace MyDL{
     }
 
 
+    // MatrixXd im2col(MatrixXd input_data, int H, int W, int C, int filter_h, int filter_w, int stride, int pad)
+    // {
+    //     int out_h = (H + 2*pad - filter_h) / stride + 1; // 除算は商を取得(int同士の除算は切り捨て)
+    //     int out_w = (W + 2*pad - filter_w) / stride + 1;
+    //     // ここにパディング処理を書きたい(Eigenで良い書き方があるか？)
+
+
+    // }
+
 }
