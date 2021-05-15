@@ -157,6 +157,38 @@ namespace MyDL{
 
     };
 
+    class Conv2D: public BaseLayer
+    {
+        private:
+            int _N;
+            int _C;
+            int _H;
+            int _W;
+            int _Fn;
+            int _Fh;
+            int _Fw;
+            int _stride;
+            int _pad;
+            shared_ptr<MatrixXd> pW, pb;
+            MatrixXd _col;
+        
+        public:
+            MatrixXd dW, db;
+
+        private:
+            void padding(MatrixXd&, MatrixXd&);
+            void suppress(MatrixXd&, MatrixXd&); // ※ zero padding ⇔ zero suppress
+
+        public:
+            Conv2D(){};
+            Conv2D(int, int, int, int, int, int, int, int, double);//C, H, W, filter_h, filter_w, num_filters, stride, padding size, weight init std
+            vector<MatrixXd> forward(vector<MatrixXd>);
+            vector<MatrixXd> backward(vector<MatrixXd>);
+            void im2col(MatrixXd&, MatrixXd&);
+            void col2im(MatrixXd&, MatrixXd&);
+
+    };
+
 }
 
 

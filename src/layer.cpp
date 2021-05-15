@@ -421,5 +421,194 @@ namespace MyDL
         return grads;
     }
 
+    // -------------------------------------------------
+    //          Convolution
+    // -------------------------------------------------
+
+    Conv2D::Conv2D(int C, int H, int W, int Fh, int Fw, int Fn, int stride, int pad, double weight_init_std)
+    :_C(C), _H(H), _W(W), _Fh(Fh), _Fw(Fw), _Fn(Fn), _stride(stride), _pad(pad)
+    {
+        pW = std::make_shared<MatrixXd>(C*Fh*Fw, Fn);
+        pb = std::make_shared<MatrixXd>(1, Fn);
+        *pW = weight_init_std * MatrixXd::Random(C*Fh*Fw, Fn);
+        // *pW = MatrixXd::Ones(C*Fh*Fw, Fn); // デバッグ用
+        *pb = MatrixXd::Zero(1, Fn);
+    }
+
+    vector<MatrixXd> Conv2D::forward(vector<MatrixXd> inputs)
+    {
+        MatrixXd X, Y, W;
+        VectorXd b;
+        vector<MatrixXd> outs;
+        X = inputs[0];
+        _N = X.rows(); // batch size
+        
+        W = *pW;
+        b = pb->row(0);
+
+        int Oh = 1 + (_H + 2 * _pad - _Fh) / _stride;
+        int Ow = 1 + (_W + 2 * _pad - _Fw) / _stride;
+
+        im2col(X, _col);
+
+        Y = (_col * W).rowwise() + b.transpose();
+        Map<MatrixXd> Y_reshaped(Y.data(), _N, _Fn*Oh*Ow);
+
+        outs.push_back(Y_reshaped);
+        return outs;
+    }
+
+    // 未実装 col2im(deconvolution)を実装する必要がある
+    vector<MatrixXd> Conv2D::backward(vector<MatrixXd> douts)
+    {
+        vector<MatrixXd> grads;
+        // doutとして入ってくるのは、(N, Fn*Oh*Ow) という形状が前提
+
+        MatrixXd dout = douts[0];
+        MatrixXd W, dcol, dX;
+        VectorXd b;
+        W = *pW;
+
+
+        int Oh = (2*_pad+_H-_Fh) / _stride + 1;
+        int Ow = (2*_pad+_W-_Fw) / _stride + 1;
+
+        Map<MatrixXd> reshaped_dout(dout.data(), _N*Oh*Ow, _Fn);
+
+        db = reshaped_dout.colwise().sum();
+        dW = _col.transpose() * reshaped_dout;
+
+        dcol = reshaped_dout * W.transpose(); // (N×Oh×Ow) × (C×Fh×Fw)
+
+        col2im(dcol, dX);
+
+        grads.push_back(dX);
+
+        return grads;
+    }
+
+    void Conv2D::padding(MatrixXd& img, MatrixXd& pad_img)
+    {
+        pad_img = MatrixXd::Zero(_N, _C * (_H + 2 * _pad) * (_W + 2 * _pad));
+
+        int pad_H_elems = _H + 2 * _pad;
+        int pad_W_elems = _W + 2 * _pad;
+        int pad_C_elems = pad_H_elems * pad_W_elems;
+
+        for (int n = 0; n < _N; n++)
+        {
+            for (int c = 0; c < _C; c++)
+            {
+                for (int h = 0; h < _H; h++)
+                {
+                    for (int w = 0; w < _W; w++)
+                    {
+                        // 1pixelずつ置き換え
+                        pad_img(n, c * pad_C_elems + (h + _pad) * pad_W_elems + (w + _pad)) = img(n, c * (_H * _W) + _W * h + w);
+                    }
+                }
+            }
+        }
+    }
+
+    void Conv2D::im2col(MatrixXd& img, MatrixXd& col)
+    {
+        MatrixXd pad_img;
+
+        padding(img, pad_img);
+
+        int Oh = (2 * _pad + _H - _Fh) / _stride + 1;
+        int Ow = (2 * _pad + _W - _Fw) / _stride + 1;
+
+        col = MatrixXd::Zero(_N * Oh * Ow, _Fh * _Fw * _C);
+
+        int h_start = 0;
+        int w_start = 0;
+
+        int pad_H = _H + 2 * _pad;
+        int pad_W = _W + 2 * _pad;
+
+        int tmp_col_row, tmp_col_width;
+        int tmp_img_start; 
+
+        for (int n = 0; n < _N; n++)
+        {
+            for (int c = 0; c < _C; c++)
+            {
+                for (int h_start = 0; h_start < Oh; h_start++)
+                {
+                    for (int w_start = 0; w_start < Ow; w_start++)
+                    {
+                        for (int h_offset = 0; h_offset < _Fh; h_offset++)
+                        {
+                            tmp_col_row = n * Oh * Ow + h_start * Ow + w_start;
+                            tmp_col_width = c * _Fh * _Fw + h_offset * _Fw;
+                            tmp_img_start = c * pad_H * pad_W + (h_start * _stride + h_offset) * pad_W + w_start * _stride;
+                            col.block(tmp_col_row, tmp_col_width, 1, _Fw) = pad_img.block(n, tmp_img_start, 1, _Fw);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    void Conv2D::col2im(MatrixXd& col, MatrixXd& img)
+    {
+        int pad_H = _H + 2 * _pad;
+        int pad_W = _W + 2 * _pad;
+
+        MatrixXd pad_img = MatrixXd::Zero(_N, _C*pad_H*pad_W);
+
+        int Oh = (2 * _pad + _H - _Fh) / _stride + 1;
+        int Ow = (2 * _pad + _W - _Fw) / _stride + 1;
+
+        int tmp_img_start;
+        int tmp_col_row, tmp_col_width;
+
+        for (int n = 0; n < _N; n++)
+        {
+            for (int c = 0; c < _C; c++)
+            {
+                for (int h = 0; h < Oh; h++)
+                {
+                    for (int w = 0; w < Ow; w++)
+                    {
+                        for (int h_offset = 0; h_offset < _Fh; h_offset++)
+                        {
+                            tmp_img_start = pad_H*pad_W*c+(h+h_offset)*pad_W+w;
+                            tmp_col_row = Oh*Ow*n+Ow*h+w;
+                            tmp_col_width = c*_Fh*_Fw+h_offset*_Fw;
+                            pad_img.block(n, tmp_img_start, 1, _Fw) += col.block(tmp_col_row, tmp_col_width, 1, _Fw);
+                        }
+                    }
+                }
+            }
+        }
+
+        suppress(pad_img, img);
+
+    }
+
+    void Conv2D::suppress(MatrixXd& pad_img, MatrixXd& img)
+    {
+        img = MatrixXd::Zero(_N, _C*_H*_W);
+        int pad_H = 2*_pad + _H;
+        int pad_W = 2*_pad + _W;
+
+        for (int n = 0; n < _N; n++)
+        {
+            for (int c = 0; c < _C; c++)
+            {
+                for (int h = 0; h < _H; h++)
+                {
+                    for (int w = 0; w < _W; w++)
+                    {
+                        // 1pixelずつ置き換え
+                        img(n, c*_H*_W+h*_W+w) = pad_img(n, c*pad_H*pad_W+(h+_pad)*pad_W+(_pad+w));
+                    }
+                }
+            }
+        }
+    }
 
 }
