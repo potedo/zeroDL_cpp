@@ -24,6 +24,7 @@ add_subdirectory(ch3)
 add_subdirectory(ch4)
 add_subdirectory(ch5)
 add_subdirectory(ch6)
+add_subdirectory(ch7)
 
 # 各種機能など検証用ディレクトリ(git管理しない)
 add_subdirectory(sandbox)

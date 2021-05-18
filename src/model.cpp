@@ -415,4 +415,154 @@ namespace MyDL
 
         return grads;
     }
+
+    // -----------------------------------------------------------
+    // SimpleConvModel: Convolutionの検証用
+    // -----------------------------------------------------------
+
+    SimpleConvModel::SimpleConvModel(const int input_channels,
+                                     const int input_height,
+                                     const int input_width,
+                                     const int filter_num,
+                                     const int filter_size,
+                                     const int pad,
+                                     const int stride,
+                                     const int hidden_size,
+                                     const int output_size,
+                                     const double weight_init_std)
+    : _C(input_channels), _H(input_height), _W(input_width), _filter_num(filter_num), _filter_size(filter_size), _pad(pad), _stride(stride), _hidden_size(hidden_size), _output_size(output_size)
+    {
+        int Oh = (_pad*2 + _H - _filter_size) / _stride + 1;
+        int Ow = (_pad*2 + _W - _filter_size) / _stride + 1;
+        int Ph = 2;
+        int Pw = 2; // Poolingのサイズは固定
+        int p_stride = 2;
+        int p_pad = 0;
+
+        int pool_output_size = _filter_num * (Oh / 2) * (Ow / 2);
+
+        _layers["Conv1"] = make_shared<Conv2D>(_C, _H, _W, _filter_size, _filter_size, _filter_num, _stride, _pad, weight_init_std);
+        _layers["Relu1"] = make_shared<ReLU>();
+        _layers["Pool1"] = make_shared<Pooling>(_filter_num, Oh, Ow, Ph, Pw, p_stride, p_pad);
+        _layers["Affine1"] = make_shared<MyDL::Affine>(pool_output_size, _hidden_size, weight_init_std);
+        _layers["Affine2"] = make_shared<MyDL::Affine>(hidden_size, output_size, weight_init_std);
+
+        _last_layer = make_shared<SoftmaxWithLoss>();
+
+        _layer_list.push_back("Conv1");
+        _layer_list.push_back("Relu1");
+        _layer_list.push_back("Pool1");
+        _layer_list.push_back("Affine1");
+        _layer_list.push_back("Affine2");
+
+        if (auto cast_conv = std::dynamic_pointer_cast<Conv2D>(_layers["Conv1"]))
+        {
+            params["W1"] = cast_conv->pW;
+            params["b1"] = cast_conv->pb;
+        }
+
+        if (auto cast_affine1 = std::dynamic_pointer_cast<MyDL::Affine>(_layers["Affine1"]))
+        {
+            params["W2"] = cast_affine1->pW;
+            params["b2"] = cast_affine1->pb;
+        }
+
+        if (auto cast_affine2 = std::dynamic_pointer_cast<MyDL::Affine>(_layers["Affine2"]))
+        {
+            params["W3"] = cast_affine2->pW;
+            params["b3"] = cast_affine2->pb;
+        }
+
+    }
+
+    vector<MatrixXd> SimpleConvModel::predict(vector<MatrixXd> inputs)
+    {
+        vector<MatrixXd> X = inputs;
+        vector<MatrixXd> tmp_X;
+
+        for (auto layer : _layer_list)
+        {
+            tmp_X = _layers[layer]->forward(X);
+            X.swap(tmp_X);
+        }
+        return X;
+    }
+
+    vector<MatrixXd> SimpleConvModel::loss(vector<MatrixXd> inputs, MatrixXd &t)
+    {
+        vector<MatrixXd> pred_input, pred_out, loss_inputs, loss_output;
+        pred_input.push_back(inputs[0]);
+        pred_out = predict(pred_input);
+
+        loss_inputs.push_back(pred_out[0]);
+        loss_inputs.push_back(t);
+
+        loss_output = _last_layer->forward(loss_inputs);
+
+        return loss_output;
+    }
+
+    double SimpleConvModel::accuracy(vector<MatrixXd> inputs, MatrixXd &t)
+    {
+        vector<MatrixXd> pred_out;
+        pred_out = predict(inputs);
+
+        MatrixXd y;
+        y = pred_out[0];
+        double batch_size = t.rows();
+        double accuracy = 0;
+
+        MatrixXd::Index y_row, y_col, t_row, t_col;
+        for (int i = 0; i < batch_size; i++)
+        {
+            y.row(i).maxCoeff(&y_row, &y_col);
+            t.row(i).maxCoeff(&t_row, &t_col);
+
+            accuracy += (double)(y_col == t_col);
+        }
+
+        return accuracy / batch_size;
+    }
+
+    unordered_map<string, MatrixXd> SimpleConvModel::gradient(vector<MatrixXd> inputs, MatrixXd &t)
+    {
+        // Forward
+        vector<MatrixXd> output;
+        output = loss(inputs, t);
+
+        // Backward
+        vector<MatrixXd> dout, tmp_dout;
+        dout.push_back(MatrixXd::Ones(1, 1));
+
+        dout = _last_layer->backward(dout);
+
+        for (auto it = _layer_list.rbegin(); it != _layer_list.rend(); it++)
+        {
+            string layer = *it;
+            tmp_dout = _layers[layer]->backward(dout);
+            dout.swap(tmp_dout);
+        }
+
+        unordered_map<string, MatrixXd> grads;
+
+        if (auto cast_conv = std::dynamic_pointer_cast<Conv2D>(_layers["Conv1"]))
+        {
+            grads["W1"] = cast_conv->dW;
+            grads["b1"] = cast_conv->db;
+        }
+
+        if (auto cast_affine1 = std::dynamic_pointer_cast<MyDL::Affine>(_layers["Affine1"]))
+        {
+            grads["W2"] = cast_affine1->dW;
+            grads["b2"] = cast_affine1->db;
+        }
+
+        if (auto cast_affine2 = std::dynamic_pointer_cast<MyDL::Affine>(_layers["Affine2"]))
+        {
+            grads["W3"] = cast_affine2->dW;
+            grads["b3"] = cast_affine2->db;
+        }
+
+        return grads;
+    }
 }

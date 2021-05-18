@@ -96,6 +96,44 @@ namespace MyDL{
             unordered_map<string, shared_ptr<MatrixXd>> get_params(void){return this->params;};
     };
 
+    
+    class SimpleConvModel: public BaseModel
+    {
+        private:
+            int _C;
+            int _H;
+            int _W;
+            int _filter_num;
+            int _filter_size;
+            int _pad;
+            int _stride;
+            int _hidden_size;
+            int _output_size;
+            unordered_map<string, shared_ptr<BaseLayer>> _layers;
+            vector<string> _layer_list;
+            shared_ptr<BaseLayer> _last_layer;
+
+        public:
+            unordered_map<string, shared_ptr<MatrixXd>> params;
+
+        public:
+            SimpleConvModel(const int, // input_channels
+                            const int, // input_height
+                            const int, // input_width
+                            const int, // filter num
+                            const int, // filter size
+                            const int, // pad
+                            const int, // stride
+                            const int, // hidden size
+                            const int, // output_size
+                            const double); // weight_init_std
+            vector<MatrixXd> predict(vector<MatrixXd>);
+            vector<MatrixXd> loss(vector<MatrixXd>, MatrixXd &);
+            double accuracy(vector<MatrixXd>, MatrixXd &);
+            unordered_map<string, MatrixXd> gradient(vector<MatrixXd>, MatrixXd &);
+            unordered_map<string, shared_ptr<MatrixXd>> get_params(void) { return this->params; };
+    };
+
 }
 
 #endif //_MODEL_H_

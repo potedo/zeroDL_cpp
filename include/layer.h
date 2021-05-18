@@ -169,10 +169,10 @@ namespace MyDL{
             int _Fw;
             int _stride;
             int _pad;
-            shared_ptr<MatrixXd> pW, pb;
             MatrixXd _col;
         
         public:
+            shared_ptr<MatrixXd> pW, pb;
             MatrixXd dW, db;
 
         private:
@@ -187,6 +187,37 @@ namespace MyDL{
             void im2col(MatrixXd&, MatrixXd&);
             void col2im(MatrixXd&, MatrixXd&);
 
+    };
+
+    class Pooling: public BaseLayer
+    {
+        private:
+            int _N;
+            int _C;
+            int _H;
+            int _W;
+            int _Ph;
+            int _Pw;
+            int _stride;
+            int _pad;
+
+            MatrixXd _X;
+
+        public:
+            MatrixXi _argmax;
+
+        private:
+            void padding(MatrixXd&, MatrixXd&);
+            void suppress(MatrixXd&, MatrixXd&);
+        
+        public:
+            // 基本的にPoolingのPaddingは0とする→前段でPaddingした結果が得られるから
+            Pooling(){};
+            Pooling(int, int, int, int, int, int, int); // C, H, W, Ph, Pw, stride, pad
+            vector<MatrixXd> forward(vector<MatrixXd>);
+            vector<MatrixXd> backward(vector<MatrixXd>);
+            void im2col(MatrixXd &, MatrixXd &);
+            void col2im(MatrixXd &, MatrixXd &);
     };
 
 }

@@ -10,6 +10,7 @@ add_executable(test_trainer test_trainer.cpp)
 add_executable(test_trainer_multi_layer_net test_trainer_multi_layer_net.cpp)
 add_executable(hyperparameter_optimization hyperparameter_optimization.cpp)
 add_executable(test_conv test_conv.cpp)
+add_executable(test_pooling test_pooling.cpp)
 
 find_package(PythonLibs REQUIRED)
 include_directories(${PYTHON_INCLUDE_DIRS})
@@ -61,5 +62,9 @@ target_link_libraries(hyperparameter_optimization
 )
 
 target_link_libraries(test_conv
+    zeroDLcpp
+)
+
+target_link_libraries(test_pooling
     zeroDLcpp
 )

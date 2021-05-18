@@ -96,7 +96,7 @@ namespace MyDL{
     // ------------------------------------------------------
 
     // コンストラクタ
-    MnistEigenDataset::MnistEigenDataset(int batch_size, bool random_load, bool one_hot_label, bool normalize)
+    MnistEigenDataset::MnistEigenDataset(const int batch_size, bool random_load, bool one_hot_label, bool normalize)
     {
         _batch_size = batch_size;
         _one_hot_label = one_hot_label;

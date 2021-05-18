@@ -575,7 +575,7 @@ namespace MyDL
                     {
                         for (int h_offset = 0; h_offset < _Fh; h_offset++)
                         {
-                            tmp_img_start = pad_H*pad_W*c+(h+h_offset)*pad_W+w;
+                            tmp_img_start = pad_H*pad_W*c+(h*_stride+h_offset)*pad_W+w*_stride;
                             tmp_col_row = Oh*Ow*n+Ow*h+w;
                             tmp_col_width = c*_Fh*_Fw+h_offset*_Fw;
                             pad_img.block(n, tmp_img_start, 1, _Fw) += col.block(tmp_col_row, tmp_col_width, 1, _Fw);
@@ -611,4 +611,235 @@ namespace MyDL
         }
     }
 
+    // -------------------------------------------------
+    //          Pooling
+    // -------------------------------------------------
+
+    Pooling::Pooling(int c, int h, int w, int Ph, int Pw, int stride, int pad)
+    :_C(c), _H(h), _W(w), _Ph(Ph), _Pw(Pw), _stride(stride), _pad(pad)
+    {
+    }
+
+    vector<MatrixXd> Pooling::forward(vector<MatrixXd> inputs)
+    {
+        MatrixXd X, col, vec_out;
+        vector<MatrixXd> outs;
+
+        X = inputs[0];
+        _X = X;
+        _N = X.rows();
+
+        int Oh = (2*_pad + _H - _Ph) / _stride + 1;
+        int Ow = (2*_pad + _W - _Pw) / _stride + 1;
+
+        im2col(X, col); // colは N*Oh*Ow × C*Ph*Pw のshapeをもつ
+
+        MatrixXd reshaped_col = MatrixXd::Zero(_C*_N*Oh*Ow, _Ph*_Pw);
+        MatrixXd tmp_c_col = MatrixXd::Zero(_N*Oh*Ow, _Ph*_Pw);
+
+        // column majorなので、直接reshapeすると意図した挙動にならない
+        // 各チャネルごとにreshapeをかけなおす
+        for (int c = 0; c < _C; c++)
+        {
+            // tmp_c_col = col.block(0, c*_N*Oh*Ow, _N*Oh*Ow, _Ph*_Pw);
+            tmp_c_col = col.block(0, c*_Ph*_Pw, _N*Oh*Ow, _Ph*_Pw);
+            reshaped_col.block(c*_Ph*_Pw, 0, _N*Oh*Ow, _Ph*_Pw) = tmp_c_col;
+        }
+
+        // 各channel毎に分けた実装に変更した方が良さそう(まとめてだと上手く動かない)
+        // Map<MatrixXd> reshaped_col_trans(col_trans.data(), _Ph*_Pw, _N*Oh*Ow*_C);
+        // MatrixXd reshaped_col = reshaped_col_trans.transpose();
+
+        // std::cout << "=== Pooling reshaped col ===" << std::endl;
+        // std::cout << reshaped_col << std::endl;
+
+        int num_rows = reshaped_col.rows();
+        _argmax = MatrixXi::Zero(num_rows, 1);
+        vec_out = MatrixXd::Zero(num_rows, 1);
+        MatrixXi::Index dummy_row = 0;
+        MatrixXi::Index max_col = 0;
+
+        for (int r = 0; r < num_rows; r++)
+        {
+            vec_out(r, 0) = reshaped_col.row(r).maxCoeff(&dummy_row, &max_col);
+            _argmax(r, 0) = max_col;
+        }
+    
+        // vec_out = reshaped_col.rowwise().maxCoeff();
+        Map<MatrixXd> out(vec_out.data(), _N, Oh*Ow*_C);
+
+        outs.push_back(out);
+
+        // 内部に入力データと各Pooling領域で最大値を格納していた位置のインデックスを格納する処理を作成する(Backwardで使用)
+
+        return outs;
+    }
+
+    vector<MatrixXd> Pooling::backward(vector<MatrixXd> douts)
+    {
+        MatrixXd dout; // size: N × (C×Oh×Ow)
+        MatrixXd dX;
+        vector<MatrixXd> grads;
+
+        int Oh = (2 * _pad + _H - _Ph) / _stride + 1;
+        int Ow = (2 * _pad + _W - _Pw) / _stride + 1;
+
+        dout = douts[0];
+        Map<MatrixXd> vec_dout(dout.data(), _N*Oh*Ow*_C, 1);
+
+        MatrixXd dmax = MatrixXd::Zero(_N*_C*Oh*Ow, _Ph*_Pw);
+        int argmax_index = 0;
+
+        for (int r = 0; r < dmax.rows(); r++)
+        {
+            argmax_index = _argmax(r, 0);
+            dmax(r, argmax_index) = vec_dout(r, 0);
+        }
+
+        // std::cout << dmax << std::endl;
+
+        MatrixXd tmp_c_dmax = MatrixXd::Zero(_N*Oh*Ow, _Ph*_Pw);
+        MatrixXd dcol = MatrixXd::Zero(_N*Oh*Ow, _C*_Ph*_Pw);
+
+        // ここのreshapeも、channelに合わせて妥当なやり方をする必要あり
+        for (int c = 0; c < _C; c++)
+        {
+            tmp_c_dmax = dmax.block(c*_N*Oh*Ow, 0, _N*Oh*Ow, _Ph*_Pw);
+            dcol.block(0, c*_Ph*_Pw, _N*Oh*Ow, _Ph*_Pw) = tmp_c_dmax;
+        }
+
+        // Map<MatrixXd> dcol_map(dmax.data(), _N*Oh*Ow, _C*_Ph*_Pw);
+        // MatrixXd dcol = dcol_map; // Map<MatrixXd>を直接col2imに突っ込むとコンパイルエラーになる
+
+        // std::cout << dcol << std::endl;
+
+        col2im(dcol, dX);
+
+        grads.push_back(dX);
+
+        return grads;
+    }
+
+    void Pooling::im2col(MatrixXd& img, MatrixXd& col)
+    {
+        MatrixXd pad_img;
+
+        padding(img, pad_img);
+
+        int Oh = (2 * _pad + _H - _Ph) / _stride + 1;
+        int Ow = (2 * _pad + _W - _Pw) / _stride + 1;
+
+        col = MatrixXd::Zero(_N * Oh * Ow, _Ph * _Pw * _C);
+
+        int h_start = 0;
+        int w_start = 0;
+
+        int pad_H = _H + 2 * _pad;
+        int pad_W = _W + 2 * _pad;
+
+        int tmp_col_row, tmp_col_width;
+        int tmp_img_start;
+
+        for (int n = 0; n < _N; n++)
+        {
+            for (int c = 0; c < _C; c++)
+            {
+                for (int h_start = 0; h_start < Oh; h_start++)
+                {
+                    for (int w_start = 0; w_start < Ow; w_start++)
+                    {
+                        for (int h_offset = 0; h_offset < _Ph; h_offset++)
+                        {
+                            tmp_col_row = n * Oh * Ow + h_start * Ow + w_start;
+                            tmp_col_width = c * _Ph * _Pw + h_offset * _Pw;
+                            tmp_img_start = c * pad_H * pad_W + (h_start * _stride + h_offset) * pad_W + w_start * _stride;
+                            col.block(tmp_col_row, tmp_col_width, 1, _Pw) = pad_img.block(n, tmp_img_start, 1, _Pw);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    void Pooling::col2im(MatrixXd& col, MatrixXd& img)
+    {
+        int pad_H = _H + 2 * _pad;
+        int pad_W = _W + 2 * _pad;
+
+        MatrixXd pad_img = MatrixXd::Zero(_N, _C*pad_H*pad_W);
+
+        int Oh = (2 * _pad + _H - _Ph) / _stride + 1;
+        int Ow = (2 * _pad + _W - _Pw) / _stride + 1;
+
+        int tmp_img_start;
+        int tmp_col_row, tmp_col_width;
+
+        for (int n = 0; n < _N; n++)
+        {
+            for (int c = 0; c < _C; c++)
+            {
+                for (int h = 0; h < Oh; h++)
+                {
+                    for (int w = 0; w < Ow; w++)
+                    {
+                        for (int h_offset = 0; h_offset < _Ph; h_offset++)
+                        {
+                            tmp_img_start = pad_H*pad_W*c+(h*_stride+h_offset)*pad_W+w*_stride;
+                            tmp_col_row = Oh*Ow*n+Ow*h+w;
+                            tmp_col_width = c*_Ph*_Pw+h_offset*_Pw;
+                            pad_img.block(n, tmp_img_start, 1, _Pw) += col.block(tmp_col_row, tmp_col_width, 1, _Pw);
+                        }
+                    }
+                }
+            }
+        }
+
+        suppress(pad_img, img);
+    }
+
+    void Pooling::padding(MatrixXd &img, MatrixXd &pad_img)
+    {
+        pad_img = MatrixXd::Zero(_N, _C * (_H + 2 * _pad) * (_W + 2 * _pad));
+
+        int pad_H_elems = _H + 2 * _pad;
+        int pad_W_elems = _W + 2 * _pad;
+        int pad_C_elems = pad_H_elems * pad_W_elems;
+
+        for (int n = 0; n < _N; n++)
+        {
+            for (int c = 0; c < _C; c++)
+            {
+                for (int h = 0; h < _H; h++)
+                {
+                    for (int w = 0; w < _W; w++)
+                    {
+                        // 1pixelずつ置き換え
+                        pad_img(n, c * pad_C_elems + (h + _pad) * pad_W_elems + (w + _pad)) = img(n, c * (_H * _W) + _W * h + w);
+                    }
+                }
+            }
+        }
+    }
+
+    void Pooling::suppress(MatrixXd &pad_img, MatrixXd &img)
+    {
+        img = MatrixXd::Zero(_N, _C * _H * _W);
+        int pad_H = 2 * _pad + _H;
+        int pad_W = 2 * _pad + _W;
+
+        for (int n = 0; n < _N; n++)
+        {
+            for (int c = 0; c < _C; c++)
+            {
+                for (int h = 0; h < _H; h++)
+                {
+                    for (int w = 0; w < _W; w++)
+                    {
+                        // 1pixelずつ置き換え
+                        img(n, c * _H * _W + h * _W + w) = pad_img(n, c * pad_H * pad_W + (h + _pad) * pad_W + (_pad + w));
+                    }
+                }
+            }
+        }
+    }
 }
