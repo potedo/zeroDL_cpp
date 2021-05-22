@@ -8,7 +8,6 @@ add_executable(train_multi_layer_net train_multi_layer_net.cpp)
 add_executable(train_two_layer_mlp train_two_layer_mlp.cpp)
 add_executable(test_trainer test_trainer.cpp)
 add_executable(test_trainer_multi_layer_net test_trainer_multi_layer_net.cpp)
-add_executable(hyperparameter_optimization hyperparameter_optimization.cpp)
 add_executable(test_conv test_conv.cpp)
 add_executable(test_pooling test_pooling.cpp)
 
@@ -53,12 +52,6 @@ target_link_libraries(test_trainer
 target_link_libraries(test_trainer_multi_layer_net
     zeroDLcpp
     mnist
-)
-
-target_link_libraries(hyperparameter_optimization
-    zeroDLcpp
-    mnist
-    ${PYTHON_LIBRARIES}
 )
 
 target_link_libraries(test_conv

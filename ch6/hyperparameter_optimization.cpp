@@ -80,7 +80,7 @@ int main()
         trial++;
     }
 
-    // 学習結果を描画するコードも作成する
+    // 学習結果を描画
 
     for (auto item : train_acc_history_dictionary)
     {

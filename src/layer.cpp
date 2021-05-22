@@ -256,21 +256,6 @@ namespace MyDL
         _avg_var = VectorXd::Zero(input_size);
     }
 
-    // BatchNorm::BatchNorm(const int input_size, const double weight_init_std, const double momentum)
-    // {
-    //     auto gamma = std::make_shared<MatrixXd>(1, input_size);
-    //     auto beta  = std::make_shared<MatrixXd>(1, input_size);
-    //     *gamma = weight_init_std * MatrixXd::Random(1, input_size); // Onesで初期化する方が良い？
-    //     *beta  = weight_init_std * MatrixXd::Random(1, input_size); // Zerosで初期化する方が良い？
-
-    //     pgamma = gamma;
-    //     pbeta  = beta;
-    //     _momentum = momentum;
-
-    //     _avg_mean = VectorXd::Zero(input_size);
-    //     _avg_var  = VectorXd::Zero(input_size);
-    // }
-
 
     vector<MatrixXd> BatchNorm::forward(vector<MatrixXd> inputs)
     {
@@ -343,13 +328,6 @@ namespace MyDL
         // colwise()を忘れないように -> shapeが合わない
         dstd = ((-1.0 * dXn).array() * Xc.array()).colwise().sum().array().rowwise()
                 / (std.transpose().array().pow(2)); // ブロードキャスト演算
-
-
-        // // デバッグ用(上記dstdのshapeが合わない原因調査。colwise().sum()が抜けていたせいでshapeが合わなかった)
-        // MatrixXd tmp_dstd;
-        // tmp_dstd = ((-1.0) * dXn).array() * Xc.array(); // ブロードキャスト演算
-        // var  = std.array().pow(2);
-        // dstd = tmp_dstd.colwise().sum().array().rowwise() / var.transpose().array());
 
 
         dvar = (0.5 * dstd).array() * std.array().inverse(); // Vector同士の要素積はarray()を使用。要素商はarray().inverse()とする。
@@ -431,7 +409,6 @@ namespace MyDL
         pW = std::make_shared<MatrixXd>(C*Fh*Fw, Fn);
         pb = std::make_shared<MatrixXd>(1, Fn);
         *pW = weight_init_std * MatrixXd::Random(C*Fh*Fw, Fn);
-        // *pW = MatrixXd::Ones(C*Fh*Fw, Fn); // デバッグ用
         *pb = MatrixXd::Zero(1, Fn);
     }
 
@@ -458,7 +435,6 @@ namespace MyDL
         return outs;
     }
 
-    // 未実装 col2im(deconvolution)を実装する必要がある
     vector<MatrixXd> Conv2D::backward(vector<MatrixXd> douts)
     {
         vector<MatrixXd> grads;
@@ -641,17 +617,9 @@ namespace MyDL
         // 各チャネルごとにreshapeをかけなおす
         for (int c = 0; c < _C; c++)
         {
-            // tmp_c_col = col.block(0, c*_N*Oh*Ow, _N*Oh*Ow, _Ph*_Pw);
             tmp_c_col = col.block(0, c*_Ph*_Pw, _N*Oh*Ow, _Ph*_Pw);
             reshaped_col.block(c*_Ph*_Pw, 0, _N*Oh*Ow, _Ph*_Pw) = tmp_c_col;
         }
-
-        // 各channel毎に分けた実装に変更した方が良さそう(まとめてだと上手く動かない)
-        // Map<MatrixXd> reshaped_col_trans(col_trans.data(), _Ph*_Pw, _N*Oh*Ow*_C);
-        // MatrixXd reshaped_col = reshaped_col_trans.transpose();
-
-        // std::cout << "=== Pooling reshaped col ===" << std::endl;
-        // std::cout << reshaped_col << std::endl;
 
         int num_rows = reshaped_col.rows();
         _argmax = MatrixXi::Zero(num_rows, 1);
@@ -665,12 +633,9 @@ namespace MyDL
             _argmax(r, 0) = max_col;
         }
     
-        // vec_out = reshaped_col.rowwise().maxCoeff();
         Map<MatrixXd> out(vec_out.data(), _N, Oh*Ow*_C);
 
         outs.push_back(out);
-
-        // 内部に入力データと各Pooling領域で最大値を格納していた位置のインデックスを格納する処理を作成する(Backwardで使用)
 
         return outs;
     }
@@ -696,22 +661,14 @@ namespace MyDL
             dmax(r, argmax_index) = vec_dout(r, 0);
         }
 
-        // std::cout << dmax << std::endl;
-
         MatrixXd tmp_c_dmax = MatrixXd::Zero(_N*Oh*Ow, _Ph*_Pw);
         MatrixXd dcol = MatrixXd::Zero(_N*Oh*Ow, _C*_Ph*_Pw);
 
-        // ここのreshapeも、channelに合わせて妥当なやり方をする必要あり
         for (int c = 0; c < _C; c++)
         {
             tmp_c_dmax = dmax.block(c*_N*Oh*Ow, 0, _N*Oh*Ow, _Ph*_Pw);
             dcol.block(0, c*_Ph*_Pw, _N*Oh*Ow, _Ph*_Pw) = tmp_c_dmax;
         }
-
-        // Map<MatrixXd> dcol_map(dmax.data(), _N*Oh*Ow, _C*_Ph*_Pw);
-        // MatrixXd dcol = dcol_map; // Map<MatrixXd>を直接col2imに突っ込むとコンパイルエラーになる
-
-        // std::cout << dcol << std::endl;
 
         col2im(dcol, dX);
 

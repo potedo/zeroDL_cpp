@@ -11,6 +11,7 @@ add_executable(zeroDL main.cpp)
 # 本当はtarget_include_directoriesで個別に指定した方が良い
 include_directories(/usr/include/eigen3)
 include_directories(/usr/include/python3.6)
+include_directories(/usr/include/matplotlib-cpp)
 include_directories(include)
 include_directories(datasets/include)
 include_directories(ch5/include)
