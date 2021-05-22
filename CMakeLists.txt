@@ -27,7 +27,7 @@ add_subdirectory(ch6)
 add_subdirectory(ch7)
 
 # 各種機能など検証用ディレクトリ(git管理しない)
-add_subdirectory(sandbox)
+# add_subdirectory(sandbox)
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
