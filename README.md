@@ -2,6 +2,7 @@
 
 ## 概要
 O'REILLYから出版されている「ゼロから作るDeep Learning」を、勉強用にC++で実装しなおしたものです。
+中心となる内容は、zeroDLcppという名前の静的ライブラリとしてビルドするよう構成してあります。
 
 ライセンスはMITライセンスです。
 なお、ソースコードの利用については自己責任でお願いします。
@@ -58,7 +59,7 @@ http://yann.lecun.com/exdb/mnist/
 
 ## プロジェクト構成
 
-- ch〇〇：ゼロから作るDeep Learningの各章に対応した内容を実装したフォルダです。実装の際にライブラリの使い方を確認したコードも含まれます。
+- ch〇〇：ゼロから作るDeep Learningの各章に対応した内容を実装したフォルダです。実装の際に、依存ライブラリの使い方を確認したコードも含まれます。
 - datasets: MNISTのデータおよびそのローダを配置するディレクトリ
 - include, src: 6章以降で使用するモジュールをライブラリ化したもの
 - simple_lib: 5章までで使用するモジュールをライブラリ化したもの
@@ -162,3 +163,9 @@ predict, loss, accuracy, gradient, get_paramsというメソッドが最低限�
 その他実装上便利な関数を実装。今回は次の1つだけを実装
 
 - load_json: jsonの内容を読み込む関数
+
+## Author
+
+Twitter: https://twitter.com/Nov_Log893
+Blog: https://novnote.com/
+
