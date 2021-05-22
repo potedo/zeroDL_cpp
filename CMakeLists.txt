@@ -27,16 +27,6 @@ add_subdirectory(ch5)
 add_subdirectory(ch6)
 add_subdirectory(ch7)
 
-# 各種機能など検証用ディレクトリ(git管理しない)
-# add_subdirectory(sandbox)
-
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
 include(CPack)
-
-# 変数の表示
-# get_cmake_property(_variableNames CACHE_VARIABLES)
-# list (SORT _variableNames)
-# foreach (_variableName ${_variableNames})
-#     message(STATUS "${_variableName}=${${_variableName}}")
-# endforeach()

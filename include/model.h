@@ -29,7 +29,7 @@ namespace MyDL{
             virtual vector<MatrixXd> loss(vector<MatrixXd>, MatrixXd&) = 0;
             virtual double accuracy(vector<MatrixXd>, MatrixXd&) = 0;
             virtual unordered_map<string, MatrixXd> gradient(vector<MatrixXd>, MatrixXd&) = 0;
-            virtual unordered_map<string, shared_ptr<MatrixXd>> get_params(void) = 0; // Trainerクラスでパラメータを呼び出すのに必要。これを使えば直接model->paramsとかしなくて済むのでは
+            virtual unordered_map<string, shared_ptr<MatrixXd>> get_params(void) = 0; // Trainerクラスでパラメータを呼び出すのに必要。
     };
 
 
