@@ -164,8 +164,3 @@ predict, loss, accuracy, gradient, get_paramsというメソッドが最低限�
 
 - load_json: jsonの内容を読み込む関数
 
-## Author
-
-Twitter: https://twitter.com/Nov_Log893
-Blog: https://novnote.com/
-
